@@ -3,7 +3,7 @@ import Link from "next/link";
 const highlightLinks = [
   {
     title: "Product Listing",
-    description: "Nike-style filter flow with URL query state.",
+    description: "Filter-first flow with URL query state.",
     href: "/products?category=running&sort=newest&page=1",
     cta: "Open /products",
   },

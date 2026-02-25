@@ -2,7 +2,20 @@
 
 更新規則：
 - 你通知「某里程碑完成且測試通過」後，我會把該里程碑狀態改為 `Done`，並記錄完成日期。
+- 每個里程碑完成時，必須同步更新對應 Jira issue 狀態為 `完成`。
 - 預設狀態：`Todo`。
+
+Jira 對應：
+- `M0 -> EP-2`
+- `M1 -> EP-3`
+- `M2 -> EP-4`
+- `M3 -> EP-5`
+- `M4 -> EP-6`
+- `M5 -> EP-7`
+- `M6 -> EP-8`
+- `M7 -> EP-9`
+- `M8 -> EP-10`
+- `M9 -> EP-11`
 
 ## Status Board
 
@@ -10,7 +23,7 @@
 | --- | --- | --- | --- |
 | M0 產品定義與規格凍結 | Todo | - | MVP、流程、狀態機、API 規範 |
 | M1 全棧骨架與基礎部署 | Done | 2026-02-25 | Next 全棧、/admin、/api/health、Prisma 基礎、Vercel 部署成功 |
-| M2 前台 IA 與路由結構 | Todo | - | AppLayout、Nike 風格篩選路由規劃 |
+| M2 前台 IA 與路由結構 | Done | 2026-02-25 | AppLayout、Header Mega Menu、路由規劃、query 規範、mobile-first 導覽完成 |
 | M3 前台 UI 文件與靜態落地 | Todo | - | 先 docs 再實作、mock data |
 | M4 資料庫建模與遷移 | Todo | - | Prisma schema/migration/seed |
 | M5 API 落地與前台串接 | Todo | - | products/cart/orders + Auth/RBAC 基礎 |
@@ -55,16 +68,16 @@
 ## M2 前台 IA 與路由結構
 
 ### DoD
-- [ ] 完成 `AppLayout`（Header/Footer/Mobile Nav）
-- [ ] 路由定義：`/products`、`/products/[slug]`、`/cart`、`/checkout`
-- [ ] 篩選 query 規範：`category/price/size/color/sort/page`
-- [ ] Mobile-first 響應式準則文件化
+- [x] 完成 `AppLayout`（Header/Footer/Mobile Nav）
+- [x] 路由定義：`/products`、`/products/[slug]`、`/cart`、`/checkout`
+- [x] 篩選 query 規範：`category/priceMin/priceMax/size/color/sort/page`（並含 `gender/group/sport/collection/sale/q`）
+- [x] Mobile-first 響應式準則文件化
 
 ### 驗收 checklist
-- [ ] `docs/frontend/routes-storefront.md`
-- [ ] `docs/frontend/layout-storefront.md`
-- [ ] 手機/桌機導覽正常
-- [ ] 篩選可透過 URL 還原狀態
+- [x] `docs/frontend/routes-storefront.md`
+- [x] `docs/frontend/layout-storefront.md`
+- [x] 手機/桌機導覽正常
+- [x] 篩選可透過 URL 還原狀態
 
 ## M3 前台 UI 文件與靜態落地
 

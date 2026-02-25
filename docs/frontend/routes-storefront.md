@@ -7,14 +7,24 @@
 - `/products/[slug]`: 商品詳情頁（PDP）
 - `/cart`: 購物車
 - `/checkout`: 結帳流程骨架
+- `/snkrs`: SNKRS 專區
+- `/help`: 協助中心（占位頁）
+- `/join`: 加入會員（占位頁）
+- `/login`: 登入（占位頁）
+- `/favorites`: 收藏頁（占位頁）
 
 ## Query conventions (PLP)
 
 - `category`: 商品分類
-- `price`: 價格區間代碼（M3/M5 再定義實際 mapping）
+- `group`: Header 策展群組（如 `new-featured`）
+- `gender`: `men | women | kids | unisex`
+- `sport`: 運動分類
+- `collection`: 系列分類
+- `sale`: 是否特惠
+- `q`: 搜尋關鍵字
 - `size`: 尺寸
 - `color`: 顏色
-- `sort`: 排序（`newest` / `price_asc` / `price_desc`）
+- `sort`: 排序（`newest` / `price_asc` / `price_desc` / `popular`）
 - `page`: 分頁頁碼（從 `1` 開始）
 
 ## URL examples

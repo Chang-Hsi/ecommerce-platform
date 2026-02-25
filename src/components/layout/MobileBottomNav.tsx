@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const mobileNavItems = [
-  { href: "/", label: "Home" },
-  { href: "/products", label: "Shop" },
-  { href: "/cart", label: "Cart" },
-  { href: "/checkout", label: "Pay" },
+  { href: "/", label: "首頁" },
+  { href: "/products", label: "商店" },
+  { href: "/cart", label: "購物車" },
+  { href: "/checkout", label: "結帳" },
 ];
 
 export function MobileBottomNav() {

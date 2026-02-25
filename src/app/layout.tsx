@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Ecommerce Platform Demo",
-  description: "Nike-style ecommerce demo with Next.js full-stack architecture",
+  description: "Ecommerce demo with Next.js full-stack architecture",
 };
 
 export default function RootLayout({

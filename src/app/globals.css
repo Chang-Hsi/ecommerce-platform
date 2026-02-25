@@ -20,3 +20,255 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), "Noto Sans TC", sans-serif;
 }
+
+@keyframes zoomInTitle {
+  from {
+    opacity: 0;
+    transform: scale(var(--zoom-start, 0.85));
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.zoom-in-title {
+  animation: zoomInTitle var(--zoom-duration, 700ms) cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: center;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(calc(var(--anim-distance, 32px) * -1));
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(var(--anim-distance, 32px));
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(var(--anim-distance, 32px));
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(calc(var(--anim-distance, 32px) * -1));
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: var(--fade-start-opacity, 0);
+    transform: translateX(calc(var(--anim-distance, 32px) * -1));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: var(--fade-start-opacity, 0);
+    transform: translateX(var(--anim-distance, 32px));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: var(--fade-start-opacity, 0);
+    transform: translateY(var(--anim-distance, 32px));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: var(--fade-start-opacity, 0);
+    transform: translateY(calc(var(--anim-distance, 32px) * -1));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-left-in,
+.slide-lefr-in {
+  animation: slideInLeft var(--anim-duration, 700ms)
+    var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--anim-delay, 0ms) both;
+}
+
+.slide-right-in {
+  animation: slideInRight var(--anim-duration, 700ms)
+    var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--anim-delay, 0ms) both;
+}
+
+.slide-up-in {
+  animation: slideInUp var(--anim-duration, 700ms) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1))
+    var(--anim-delay, 0ms) both;
+}
+
+.slide-down-in {
+  animation: slideInDown var(--anim-duration, 700ms)
+    var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--anim-delay, 0ms) both;
+}
+
+.fade-left-in,
+.fade-lefr-in {
+  animation: fadeInLeft var(--anim-duration, 700ms) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1))
+    var(--anim-delay, 0ms) both;
+}
+
+.fade-right-in {
+  animation: fadeInRight var(--anim-duration, 700ms)
+    var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--anim-delay, 0ms) both;
+}
+
+.fade-up-in {
+  animation: fadeInUp var(--anim-duration, 700ms) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1))
+    var(--anim-delay, 0ms) both;
+}
+
+.fade-down-in {
+  animation: fadeInDown var(--anim-duration, 700ms) var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1))
+    var(--anim-delay, 0ms) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zoom-in-title,
+  .slide-left-in,
+  .slide-lefr-in,
+  .slide-right-in,
+  .slide-up-in,
+  .slide-down-in,
+  .fade-left-in,
+  .fade-lefr-in,
+  .fade-right-in,
+  .fade-up-in,
+  .fade-down-in {
+    animation: none;
+  }
+}
+
+.md-prose {
+  max-width: 1280px;
+  font-size: 1rem;
+  line-height: 1.72;
+  letter-spacing: 0;
+  color: rgb(23 23 23 / 0.66);
+}
+
+.md-prose h1 {
+  margin-top: 1.7rem;
+  font-size: clamp(1.55rem, 3.2vw, 2.2rem);
+  line-height: 1.24;
+  font-weight: 600;
+  color: rgb(16 24 32 / 0.78);
+  letter-spacing: 0.01em;
+}
+
+.md-prose h2 {
+  margin-top: 1.5rem;
+  font-size: clamp(1.22rem, 2.2vw, 1.5rem);
+  line-height: 1.33;
+  font-weight: 600;
+  color: rgb(3 121 90 / 0.9);
+  letter-spacing: 0.01em;
+}
+
+.md-prose p {
+  margin-top: 0.8rem;
+}
+
+.md-prose ul {
+  margin-top: 0.8rem;
+  padding-left: 1.4rem;
+  list-style: disc;
+}
+
+.md-prose li + li {
+  margin-top: 0.5rem;
+}
+
+.md-prose a {
+  color: rgb(3 121 90);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.md-prose .md-table {
+  margin-top: 1rem;
+  font-size: 0.94em;
+  border: 1px solid rgb(17 24 39 / 0.12);
+}
+
+.md-prose .md-table th,
+.md-prose .md-table td {
+  padding: 0.55rem 0.65rem;
+  text-align: left;
+  vertical-align: top;
+  border: 1px solid rgb(17 24 39 / 0.12);
+}
+
+.md-prose .md-table th {
+  font-weight: 600;
+  color: rgb(17 24 39 / 0.8);
+  background: rgb(17 24 39 / 0.04);
+}
+
+.md-prose .md-code-block {
+  margin-top: 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid rgb(17 24 39 / 0.14);
+  background: rgb(17 24 39 / 0.92);
+  padding: 0.8rem 0.9rem;
+}
+
+.md-prose .md-code-block code {
+  font-size: 0.86em;
+  line-height: 1.6;
+  color: rgb(241 245 249);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+}
+
+@media (max-width: 640px) {
+  .md-prose {
+    font-size: 0.94rem;
+    line-height: 1.65;
+  }
+}

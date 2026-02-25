@@ -35,6 +35,69 @@ Nike 風格電商 Demo 的 Next.js 全棧專案（目前到 M2：AppLayout + 前
 - Follow the same pattern: thin route entry + feature page composition.
 - Detailed admin conventions are documented in `src/app/admin/README.md`.
 
+## Jira Integration (SOP)
+
+### 1) Local auth configuration
+
+Put Jira credentials in `.env.local` (never commit real secrets):
+
+```env
+JIRA_BASE_URL=https://watasiwa8531.atlassian.net
+JIRA_EMAIL=your-atlassian-email
+JIRA_API_TOKEN=your-api-token
+JIRA_PROJECT_KEY=EP
+```
+
+### 2) Verify connection
+
+```bash
+cd /Users/chanshiti/ecommerce-platform
+set -a && source .env.local && set +a
+
+curl -sS -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
+  "$JIRA_BASE_URL/rest/api/3/myself" | jq '{displayName,accountId,active}'
+
+curl -sS -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
+  "$JIRA_BASE_URL/rest/api/3/project/$JIRA_PROJECT_KEY" | jq '{key,name,id}'
+```
+
+### 3) Current roadmap issues
+
+- Epic/Workflow: `EP-1` `[Roadmap] Ecommerce Platform Milestones`
+- Milestones:
+  - `M0 -> EP-2`
+  - `M1 -> EP-3`
+  - `M2 -> EP-4`
+  - `M3 -> EP-5`
+  - `M4 -> EP-6`
+  - `M5 -> EP-7`
+  - `M6 -> EP-8`
+  - `M7 -> EP-9`
+  - `M8 -> EP-10`
+  - `M9 -> EP-11`
+
+### 4) Milestone completion sync rule (required)
+
+When a milestone is completed, **both** updates are required:
+
+1. Update local milestone doc status to `Done`:
+   - `docs/project/milestones.md`
+2. Update corresponding Jira issue status to `完成` (Done transition id: `41`).
+
+Example status transition:
+
+```bash
+set -a && source .env.local && set +a
+
+ISSUE_KEY="EP-4" # replace with milestone issue
+curl -sS -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -X POST "$JIRA_BASE_URL/rest/api/3/issue/$ISSUE_KEY/transitions" \
+  -d '{"transition":{"id":"41"}}'
+```
+
+Recommended follow-up: add a Jira comment with test evidence/PR/commit link for traceability.
+
 ## Local Development
 
 ```bash
