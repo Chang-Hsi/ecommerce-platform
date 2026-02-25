@@ -1,5 +1,10 @@
 # Ecommerce Milestones (Nike-style, Mobile-first)
 
+專案上下文單一事實來源（Source of Truth）：
+- 里程碑與完成定義：`docs/project/milestones.md`
+- Jira 對應與操作流程：`docs/project/jira.md`
+- 目前進度與下一步交接：`SESSION_HANDOFF.md`
+
 更新規則：
 - 你通知「某里程碑完成且測試通過」後，我會把該里程碑狀態改為 `Done`，並記錄完成日期。
 - 每個里程碑完成時，必須同步更新對應 Jira issue 狀態為 `完成`。

@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { MiniCartPanel } from "@/components/cart/MiniCartPanel";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
@@ -10,8 +11,9 @@ export function AppLayout({ children }: Readonly<{ children: React.ReactNode }>)
         <Header />
       </Suspense>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">{children}</main>
+      <main className="mx-auto w-full  px-4 py-8 sm:px-6">{children}</main>
 
+      <MiniCartPanel />
       <Footer />
       <MobileBottomNav />
     </div>

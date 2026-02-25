@@ -168,6 +168,29 @@ body {
     var(--anim-delay, 0ms) both;
 }
 
+.motion-slide-x {
+  transition-property: transform;
+  transition-duration: var(--motion-slide-duration, 500ms);
+  transition-timing-function: var(--motion-slide-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.motion-collapse {
+  display: grid;
+  transition-property: grid-template-rows, opacity;
+  transition-duration: var(--motion-collapse-duration, 300ms);
+  transition-timing-function: var(--motion-collapse-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.motion-collapse-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.motion-collapse-closed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .zoom-in-title,
   .slide-left-in,
@@ -181,6 +204,11 @@ body {
   .fade-up-in,
   .fade-down-in {
     animation: none;
+  }
+
+  .motion-slide-x,
+  .motion-collapse {
+    transition: none;
   }
 }
 

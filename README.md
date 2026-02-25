@@ -1,6 +1,6 @@
 # Ecommerce Platform Demo
 
-Nike 風格電商 Demo 的 Next.js 全棧專案（目前到 M2：AppLayout + 前台路由 IA）。
+Nike 風格電商 Demo 的 Next.js 全棧專案（目前進入 M3：前台 UI 靜態落地）。
 
 ## Tech Stack
 
@@ -10,24 +10,54 @@ Nike 風格電商 Demo 的 Next.js 全棧專案（目前到 M2：AppLayout + 前
 - Prisma
 - PostgreSQL
 
-## Current Scope (M2)
+## Current Scope (M3)
 
 - Storefront 路由：`/`、`/products`、`/products/[slug]`、`/cart`、`/checkout`
+- Auth 路由：`/login`、`/login/verify`（由 `src/app/(auth)/*` 提供）
 - Storefront AppLayout（sticky header + mobile bottom nav）
+- AuthLayout（登入/驗證頁專用，不含 storefront Header/Footer）
 - Admin 路由：`/admin`
 - API 路由：`/api/health`
 - Prisma 基礎 schema 與 client 初始化
-- 前台 IA 文件與 query convention（`category/price/size/color/sort/page`）
+- 前台 IA 文件與 products 外頁（PLP）靜態落地
+- 前台分層策略已定案（`content / features / components / hooks / lib`）
 
-## Architecture Rules
+## Frontend Layering Strategy
 
-### Storefront rules (already applied)
+前台之後所有頁面都必須遵守相同分層，不再把不同職責混放在同一層。
+
+- `src/content/*`
+  - 負責靜態內容與假資料（mock data / schema-like shape）
+  - 例如：`home.ts`、`products.ts`
+  - 目標：未來設計 DB / API 時可直接對照資料結構
+- `src/features/*`
+  - 負責頁面等級的拼接（Page Composition）
+  - 只做區塊組合、流程編排，不放共用 UI 元件細節
+- `src/components/*`
+  - 負責可重用 UI 元件與區塊元件
+  - 包含 layout、home、products、common 等
+- `src/hooks/*`
+  - 負責前端行為控制與狀態 orchestration（例如頁面 controller hooks）
+  - 可讀取 `searchParams`、管理 UI state、輸出給 `components/features`
+- `src/lib/*`
+  - 負責純邏輯工具、query 映射、跨頁可共用 helper（不含畫面）
+
+## Context Bootstrap (for new chat/session)
+
+每次開新對話，先讓助手讀完以下文件再動工：
+
+- `README.md`
+- `docs/project/milestones.md`
+- `docs/project/jira.md`
+- `SESSION_HANDOFF.md`
+
+## Storefront Routing Rules
 
 - Route entry files stay in `src/app/(storefront)/*` and remain thin.
-- Route files should only handle route params/search params and render feature pages.
-- Page composition/UI lives in `src/features/*`.
-- Shared layout UI lives in `src/components/layout/*`.
+- Route files only parse route/search params and render feature pages.
 - Route groups are for organization only and do not appear in URL.
+- Auth pages (`/login`, `/login/verify`) stay in `src/app/(auth)/*` and use dedicated `AuthLayout`.
+- Storefront conventions are documented in `src/app/(storefront)/README.md`.
 
 ### Admin rules (for next phase)
 
@@ -122,12 +152,21 @@ npm run db:push
 npm run db:studio
 ```
 
-## Folder Structure (M2)
+## Folder Structure (Current)
 
 ```txt
 src/
+  content/
+    home.ts
+    products.ts
   app/
+    (auth)/
+      layout.tsx
+      login/
+        page.tsx
+        verify/page.tsx
     (storefront)/
+      README.md
       layout.tsx
       page.tsx
       products/
@@ -143,17 +182,26 @@ src/
     layout.tsx
   components/layout/
     AppLayout.tsx
+    AuthLayout.tsx
     Header.tsx
     Footer.tsx
     MobileBottomNav.tsx
   features/
+    auth/
+      LoginPage.tsx
+      LoginVerifyPage.tsx
     home/HomePage.tsx
     products/
       ProductsPage.tsx
       ProductDetailPage.tsx
     cart/CartPage.tsx
     checkout/CheckoutPage.tsx
+  hooks/
+    auth/useMockAuthSession.ts
+    products/useProductsController.ts
   lib/
+    auth/mock-auth.ts
+    products/query-state.ts
     prisma.ts
 prisma/
   schema.prisma

@@ -12,16 +12,18 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { DropdownSelect } from "@/components/common/DropdownSelect";
 import {
   headerNavSections,
   hotSearchKeywords,
-  utilityLinks,
   type HeaderMenuColumn,
   type HeaderMenuLink,
   type HeaderNavSection,
-} from "@/components/layout/header-menu-data";
+} from "@/content/header-menu";
+import { resolveSafeRedirect } from "@/lib/auth/mock-auth";
+import { useMockAuthSession } from "@/hooks/auth/useMockAuthSession";
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -72,6 +74,25 @@ function getMobileQuickLinks(section: HeaderNavSection): HeaderMenuLink[] {
   }
 
   return firstColumnLinks.slice(0, 2);
+}
+
+const accountDropdownOptions = [
+  { label: "帳號", value: "account" },
+  { label: "個人檔案", value: "profile" },
+  { label: "訂單", value: "orders" },
+  { label: "最愛", value: "favorites" },
+  { label: "體驗", value: "experience" },
+  { label: "帳號設定", value: "settings" },
+  { label: "登出", value: "logout" },
+];
+
+function buildReturnPath(pathname: string, searchParams: URLSearchParams) {
+  if (pathname.startsWith("/login")) {
+    return "/";
+  }
+
+  const query = searchParams.toString();
+  return query ? `${pathname}?${query}` : pathname;
 }
 
 function SearchLayer({
@@ -132,9 +153,15 @@ type MobileDrawerLevel = 0 | 1 | 2;
 function MobileDrawer({
   open,
   onClose,
+  loginHref,
+  isAuthenticated,
+  onSignOut,
 }: Readonly<{
   open: boolean;
   onClose: () => void;
+  loginHref: string;
+  isAuthenticated: boolean;
+  onSignOut: () => void;
 }>) {
   const [level, setLevel] = useState<MobileDrawerLevel>(0);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
@@ -276,22 +303,37 @@ function MobileDrawer({
                   成為 SwooshLab 會員，體驗優質產品、獲得啟發並掌握運動界相關動態。瞭解更多資訊
                 </p>
 
-                <div className="mt-6 flex items-center gap-3">
-                  <Link
-                    href="/join"
-                    onClick={closeAndReset}
-                    className="rounded-full bg-black px-5 py-2 text-base font-semibold text-white"
-                  >
-                    加入
-                  </Link>
-                  <Link
-                    href="/login"
-                    onClick={closeAndReset}
-                    className="rounded-full border border-zinc-300 px-5 py-2 text-base font-semibold text-zinc-900"
-                  >
-                    登入
-                  </Link>
-                </div>
+                {isAuthenticated ? (
+                  <div className="mt-6 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSignOut();
+                        closeAndReset();
+                      }}
+                      className="rounded-full border border-zinc-300 px-5 py-2 text-base font-semibold text-zinc-900"
+                    >
+                      登出
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-6 flex items-center gap-3">
+                    <Link
+                      href="/join"
+                      onClick={closeAndReset}
+                      className="rounded-full bg-black px-5 py-2 text-base font-semibold text-white"
+                    >
+                      加入
+                    </Link>
+                    <Link
+                      href={loginHref}
+                      onClick={closeAndReset}
+                      className="rounded-full border border-zinc-300 px-5 py-2 text-base font-semibold text-zinc-900"
+                    >
+                      登入
+                    </Link>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4 pb-8 text-zinc-900">
@@ -392,8 +434,11 @@ function MobileDrawer({
 }
 
 export function Header() {
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { session, isAuthenticated, signOut } = useMockAuthSession();
+  const headerContainerRef = useRef<HTMLDivElement | null>(null);
 
   const desktopCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mobileUnmountTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -406,6 +451,7 @@ export function Header() {
   const [isMobileDrawerMounted, setIsMobileDrawerMounted] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isSearchLayerOpen, setIsSearchLayerOpen] = useState(false);
+  const isProductsPage = pathname.startsWith("/products");
 
   const derivedActiveMenuId = useMemo(
     () => getDerivedActiveMenuId(pathname, new URLSearchParams(searchParams.toString())),
@@ -419,6 +465,31 @@ export function Header() {
     () => headerNavSections.find((section) => section.id === desktopMenuPanelId) ?? null,
     [desktopMenuPanelId],
   );
+
+  const loginHref = useMemo(() => {
+    const returnPath = buildReturnPath(pathname, new URLSearchParams(searchParams.toString()));
+    return `/login?redirect=${encodeURIComponent(resolveSafeRedirect(returnPath))}`;
+  }, [pathname, searchParams]);
+
+  function handleAccountAction(action: string) {
+    switch (action) {
+      case "favorites":
+        router.push("/favorites");
+        return;
+      case "experience":
+        router.push("/snkrs");
+        return;
+      case "logout":
+        signOut();
+        return;
+      case "account":
+      case "profile":
+      case "orders":
+      case "settings":
+      default:
+        router.push("/help");
+    }
+  }
 
   function clearDesktopCloseTimer() {
     if (desktopCloseTimerRef.current) {
@@ -490,18 +561,69 @@ export function Header() {
     document.body.style.overflow = "";
   }, [isMobileDrawerMounted, isSearchLayerOpen]);
 
+  useEffect(() => {
+    function updateHeaderOffset() {
+      const node = headerContainerRef.current;
+      if (!node) {
+        return;
+      }
+
+      const headerHeight = node.scrollHeight;
+      document.documentElement.style.setProperty(
+        "--storefront-header-offset",
+        isProductsPage ? "0px" : `${headerHeight}px`,
+      );
+    }
+
+    updateHeaderOffset();
+
+    window.addEventListener("resize", updateHeaderOffset);
+
+    return () => {
+      window.removeEventListener("resize", updateHeaderOffset);
+    };
+  }, [isProductsPage]);
+
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--surface)]">
+      <div
+        ref={headerContainerRef}
+        className={cn(
+          "z-40",
+          isProductsPage ? "relative" : "sticky top-0",
+        )}
+      >
+        <header className="border-b border-[var(--border)] bg-[var(--surface)]">
         <div className="mx-auto hidden w-full max-w-6xl items-center justify-end gap-2 px-4 py-2 text-xs text-zinc-700 md:flex sm:px-6">
-          {utilityLinks.map((link, index) => (
-            <div key={link.href} className="flex items-center gap-2">
-              {index > 0 ? <span className="text-zinc-300">|</span> : null}
-              <Link href={link.href} className="hover:text-black">
-                {link.label}
+          <Link href="/help" className="hover:text-black">
+            協助
+          </Link>
+          <span className="text-zinc-300">|</span>
+          {isAuthenticated && session ? (
+            <DropdownSelect
+              triggerLabel={`Hi, ${session.name}`}
+              value=""
+              options={accountDropdownOptions}
+              onChange={handleAccountAction}
+              align="right"
+              openOnHover
+              highlightSelected={false}
+              showCheckIcon={false}
+              showChevron={false}
+              triggerButtonClassName="rounded-none border-0 px-0 py-0 text-xs font-normal text-zinc-700 hover:text-black"
+              panelClassName="min-w-[220px] rounded-none p-2"
+            />
+          ) : (
+            <>
+              <Link href="/join" className="hover:text-black">
+                加入
               </Link>
-            </div>
-          ))}
+              <span className="text-zinc-300">|</span>
+              <Link href={loginHref} className="hover:text-black">
+                登入
+              </Link>
+            </>
+          )}
         </div>
 
         <div
@@ -563,7 +685,11 @@ export function Header() {
               >
                 <MagnifyingGlassIcon className="h-6 w-6" aria-hidden />
               </button>
-              <Link href="/login" className="rounded-full p-2 text-zinc-800" aria-label="登入">
+              <Link
+                href={loginHref}
+                className="rounded-full p-2 text-zinc-800"
+                aria-label={isAuthenticated ? "會員中心" : "登入"}
+              >
                 <UserIcon className="h-6 w-6" aria-hidden />
               </Link>
               <Link href="/cart" className="rounded-full p-2 text-zinc-800" aria-label="購物車">
@@ -617,9 +743,18 @@ export function Header() {
             選購我們所有最新優惠商品
           </Link>
         </div>
-      </header>
+        </header>
+      </div>
 
-      {isMobileDrawerMounted ? <MobileDrawer open={isMobileDrawerOpen} onClose={closeMobileDrawer} /> : null}
+      {isMobileDrawerMounted ? (
+        <MobileDrawer
+          open={isMobileDrawerOpen}
+          onClose={closeMobileDrawer}
+          loginHref={loginHref}
+          isAuthenticated={isAuthenticated}
+          onSignOut={signOut}
+        />
+      ) : null}
       {isSearchLayerOpen ? <SearchLayer onClose={() => setIsSearchLayerOpen(false)} /> : null}
     </>
   );

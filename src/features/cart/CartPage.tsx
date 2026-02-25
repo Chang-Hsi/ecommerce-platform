@@ -1,53 +1,50 @@
-import Link from "next/link";
+"use client";
 
-const cartItems = [
-  { name: "Air Zoom Pegasus 41", qty: 1, price: 4200 },
-  { name: "Everyday Crew Socks", qty: 2, price: 480 },
-];
+import Link from "next/link";
+import { CartItemRow } from "@/components/cart/CartItemRow";
+import { CartSummaryPanel } from "@/components/cart/CartSummaryPanel";
+import { useCartController } from "@/hooks/cart/useCartController";
 
 export function CartPage() {
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const { items, summary, messages, onIncreaseQty, onDecreaseQty, onRemove, onToggleFavorite } = useCartController();
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-      <section className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-        <h1 className="text-2xl font-black text-zinc-900">Cart</h1>
-        {cartItems.map((item) => (
-          <article
-            key={item.name}
-            className="flex items-center justify-between border-b border-zinc-200 pb-3"
-          >
-            <div>
-              <p className="font-semibold text-zinc-900">{item.name}</p>
-              <p className="text-sm text-zinc-600">Qty {item.qty}</p>
-            </div>
-            <p className="font-semibold text-zinc-800">
-              NT$ {(item.price * item.qty).toLocaleString()}
-            </p>
-          </article>
-        ))}
-      </section>
+    <div className="mx-auto w-full max-w-5xl">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
+        <section className="space-y-6">
+          <h1 className="text-4xl font-semibold text-zinc-900 sm:text-2xl">購物車</h1>
 
-      <aside className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-        <h2 className="text-lg font-bold text-zinc-900">Summary</h2>
-        <div className="flex items-center justify-between text-sm text-zinc-700">
-          <span>Subtotal</span>
-          <span>NT$ {subtotal.toLocaleString()}</span>
-        </div>
-        <div className="flex items-center justify-between text-sm text-zinc-700">
-          <span>Shipping</span>
-          <span>NT$ 120</span>
-        </div>
-        <div className="border-t border-zinc-200 pt-3 text-sm font-bold text-zinc-900">
-          Total: NT$ {(subtotal + 120).toLocaleString()}
-        </div>
-        <Link
-          href="/checkout"
-          className="block rounded-full bg-zinc-900 px-5 py-2 text-center text-sm font-semibold text-white"
-        >
-          Go to Checkout
-        </Link>
-      </aside>
+          {items.length === 0 ? (
+            <div className="rounded-xl border border-zinc-200 bg-white p-6">
+              <p className="text-base text-zinc-700">{messages.emptyCart}</p>
+              <Link href="/products" className="mt-3 inline-flex text-base font-medium text-zinc-900 underline">
+                繼續選購
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {items.map((item) => (
+                <CartItemRow
+                  key={item.id}
+                  item={item}
+                  lowStockMessage={messages.lowStock}
+                  onIncreaseQty={() => onIncreaseQty(item.id)}
+                  onDecreaseQty={() => onDecreaseQty(item.id)}
+                  onRemove={() => onRemove(item.id)}
+                  onToggleFavorite={() => onToggleFavorite(item.id)}
+                />
+              ))}
+            </div>
+          )}
+
+          <section>
+            <h2 className="text-4xl font-semibold text-zinc-900 sm:text-2xl">最愛</h2>
+            <p className="mt-2 text-base text-zinc-700">{messages.favoritesEmpty}</p>
+          </section>
+        </section>
+
+        <CartSummaryPanel summary={summary} />
+      </div>
     </div>
   );
 }
