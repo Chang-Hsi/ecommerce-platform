@@ -1,12 +1,13 @@
 # Session Handoff
 
-更新時間：2026-02-25
+更新時間：2026-02-26
 
 ## 1. 當前專案狀態
 
 - 專案：`/Users/chanshiti/ecommerce-platform`
 - 目前階段：M3（前台 UI 文件與靜態落地）
 - 已完成里程碑：M1、M2
+- M3 最新進度：首頁、產品頁（PLP）、購物車頁已處理完成；下一步收藏頁
 - 里程碑看板：`docs/project/milestones.md`
 - Jira 對應規則：`docs/project/jira.md`
 
@@ -20,6 +21,10 @@
 
 ## 3. 最近完成重點
 
+- M3 頁面落地進度已推進：
+  - 首頁完成
+  - 產品頁（PLP）完成
+  - 購物車頁完成
 - `src/features/content/*` 已搬遷到 `src/content/*`
 - `header-menu-data.ts` 已搬到 `src/content/header-menu.ts`
 - products 狀態與 query 映射已分層：
@@ -29,8 +34,8 @@
 
 ## 4. 下一步建議（可直接接續）
 
-1. products 其餘 checkbox 篩選同步到 URL query（目前 colors/category/sort 已接）
-2. M3 其餘頁面（PDP/Cart/Checkout）依同模式完成文件與靜態落地
+1. 完成收藏頁（Favorites/Wishlist）UI 規格與靜態落地
+2. 完成 M3 其餘頁面（PDP/Checkout）與主流程串接驗收
 3. 通知里程碑完成後，同步更新：
    - `docs/project/milestones.md`
    - Jira 對應 issue 狀態
@@ -45,4 +50,3 @@
 - `SESSION_HANDOFF.md`
 
 並以 `/Users/chanshiti/ecommerce-platform` 作為工作目錄。
-

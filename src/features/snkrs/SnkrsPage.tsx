@@ -1,33 +1,75 @@
-import Link from "next/link";
+"use client";
+
+import { SnkrsLoadMoreButton } from "@/components/snkrs/SnkrsLoadMoreButton";
+import { SnkrsMapPanel } from "@/components/snkrs/SnkrsMapPanel";
+import { SnkrsProductGrid } from "@/components/snkrs/SnkrsProductGrid";
+import { SnkrsTabs } from "@/components/snkrs/SnkrsTabs";
+import { useSnkrsController } from "@/hooks/snkrs/useSnkrsController";
 
 export function SnkrsPage() {
-  return (
-    <div className="space-y-8">
-      <section className="rounded-3xl border border-[var(--border)] bg-zinc-100 p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">SNKRS</p>
-        <h1 className="mt-3 text-3xl font-black text-zinc-900">最高可享 7 折優惠</h1>
-        <p className="mt-3 max-w-2xl text-sm text-zinc-700">
-          這是 SNKRS 專區占位頁，後續可接發售行事曆、抽籤機制與詳細商品頁。
-        </p>
-      </section>
+  const {
+    content,
+    activeTab,
+    visibleProducts,
+    hasMoreProducts,
+    mapStores,
+    hasNearbyStores,
+    userLocation,
+    mapCenter,
+    mapNearbyText,
+    selectedStore,
+    onChangeTab,
+    onLoadMore,
+    onExploreOtherCities,
+    onSelectStore,
+    onSelectMyLocation,
+    onCloseStoreInfo,
+  } = useSnkrsController();
 
-      <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
-        <h2 className="text-lg font-bold text-zinc-900">立即選購</h2>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link
-            href="/products?sale=true&page=1"
-            className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-semibold text-white"
-          >
-            選購最新優惠商品
-          </Link>
-          <Link
-            href="/products?group=new-featured&page=1"
-            className="rounded-full border border-zinc-300 px-5 py-2 text-sm font-semibold text-zinc-700"
-          >
-            查看新品和精選
-          </Link>
+  return (
+    <div className="relative left-1/2 right-1/2 -mx-[50vw] -mt-8 w-screen bg-[var(--background)]">
+      <header className="border-y border-zinc-200 bg-white">
+        <div className="mx-auto flex h-12 max-w-[1360px] items-end gap-8 px-4 sm:px-6 lg:px-8">
+          <SnkrsTabs tabs={content.tabs} activeTab={activeTab} onChangeTab={onChangeTab} />
         </div>
-      </section>
+      </header>
+
+      {activeTab === "map" ? (
+        <SnkrsMapPanel
+          title={content.mapTitle}
+          nearbyText={mapNearbyText}
+          stores={mapStores}
+          hasNearbyStores={hasNearbyStores}
+          myLocationTitle={content.mapMyLocationTitle}
+          myLocationButtonLabel={content.mapMyLocationButtonLabel}
+          myLocationTooltipLabel={content.mapMyLocationTooltipLabel}
+          userLocation={userLocation}
+          center={mapCenter}
+          selectedStore={selectedStore}
+          onSelectStore={onSelectStore}
+          onSelectMyLocation={onSelectMyLocation}
+          onCloseStoreInfo={onCloseStoreInfo}
+          emptyTitle={content.mapEmptyTitle}
+          emptyDescription={content.mapEmptyDescription}
+          exploreOtherCityLabel={content.mapExploreOtherCityLabel}
+          onExploreOtherCities={onExploreOtherCities}
+          addressLabel={content.mapAddressLabel}
+          detailLabel={content.mapDetailLabel}
+          closeInfoLabel={content.mapCloseInfoLabel}
+        />
+      ) : (
+        <section className="mx-auto max-w-[1560px] px-4 py-8 sm:px-6 lg:px-8">
+          <SnkrsProductGrid
+            items={visibleProducts}
+            buyButtonLabel={content.buyButtonLabel}
+            upcomingButtonLabel={content.upcomingButtonLabel}
+          />
+
+          {hasMoreProducts ? (
+            <SnkrsLoadMoreButton label={content.loadMoreLabel} onClick={onLoadMore} />
+          ) : null}
+        </section>
+      )}
     </div>
   );
 }

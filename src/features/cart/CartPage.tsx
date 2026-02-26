@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CartFavoritesSection } from "@/components/cart/CartFavoritesSection";
 import { CartItemRow } from "@/components/cart/CartItemRow";
 import { CartSummaryPanel } from "@/components/cart/CartSummaryPanel";
 import { useCartController } from "@/hooks/cart/useCartController";
@@ -9,7 +10,7 @@ export function CartPage() {
   const { items, summary, messages, onIncreaseQty, onDecreaseQty, onRemove, onToggleFavorite } = useCartController();
 
   return (
-    <div className="mx-auto w-full max-w-5xl">
+    <div className="mx-auto w-full max-w-6xl">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
         <section className="space-y-6">
           <h1 className="text-4xl font-semibold text-zinc-900 sm:text-2xl">購物車</h1>
@@ -37,10 +38,7 @@ export function CartPage() {
             </div>
           )}
 
-          <section>
-            <h2 className="text-4xl font-semibold text-zinc-900 sm:text-2xl">最愛</h2>
-            <p className="mt-2 text-base text-zinc-700">{messages.favoritesEmpty}</p>
-          </section>
+          <CartFavoritesSection />
         </section>
 
         <CartSummaryPanel summary={summary} />

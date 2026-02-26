@@ -10,7 +10,6 @@ export function useProductDetailController({ mediaCount }: Readonly<UseProductDe
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [sizeError, setSizeError] = useState<string | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [openAccordionKey, setOpenAccordionKey] = useState<string | null>(null);
 
   const canGoPrevMedia = activeMediaIndex > 0;
@@ -58,10 +57,6 @@ export function useProductDetailController({ mediaCount }: Readonly<UseProductDe
     return null;
   }
 
-  function toggleFavorite() {
-    setIsFavorite((current) => !current);
-  }
-
   function toggleAccordion(key: string) {
     setOpenAccordionKey((current) => (current === key ? null : key));
   }
@@ -72,14 +67,12 @@ export function useProductDetailController({ mediaCount }: Readonly<UseProductDe
     canGoNextMedia,
     selectedSize,
     sizeError,
-    isFavorite,
     openAccordionKey,
     selectMedia,
     goPrevMedia,
     goNextMedia,
     selectSize,
     ensureSizeSelected,
-    toggleFavorite,
     toggleAccordion,
   };
 }

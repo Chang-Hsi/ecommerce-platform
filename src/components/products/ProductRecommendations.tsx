@@ -10,14 +10,6 @@ type ProductRecommendationsProps = {
   items: ProductCatalogItem[];
 };
 
-function chunkItems<T>(items: T[], chunkSize: number): T[][] {
-  const result: T[][] = [];
-  for (let index = 0; index < items.length; index += chunkSize) {
-    result.push(items.slice(index, index + chunkSize));
-  }
-  return result;
-}
-
 function ProductCard({ item }: Readonly<{ item: ProductCatalogItem }>) {
   return (
     <article className="space-y-3">
@@ -42,16 +34,37 @@ function ProductCard({ item }: Readonly<{ item: ProductCatalogItem }>) {
 }
 
 export function ProductRecommendations({ items }: Readonly<ProductRecommendationsProps>) {
-  const desktopPages = useMemo(() => chunkItems(items, 3), [items]);
-  const [desktopPageIndex, setDesktopPageIndex] = useState(0);
+  const desktopVisibleCount = useMemo(() => Math.min(3, Math.max(1, items.length)), [items.length]);
+  const maxDesktopStartIndex = useMemo(
+    () => Math.max(0, items.length - desktopVisibleCount),
+    [items.length, desktopVisibleCount],
+  );
+  const desktopItemWidthPercent = useMemo(() => 100 / desktopVisibleCount, [desktopVisibleCount]);
+  const [desktopStartIndex, setDesktopStartIndex] = useState(0);
 
   if (items.length === 0) {
     return null;
   }
 
-  const hasPrev = desktopPageIndex > 0;
-  const hasNext = desktopPageIndex < desktopPages.length - 1;
-  const visibleDesktopItems = desktopPages[desktopPageIndex] ?? [];
+  const hasPrev = desktopStartIndex > 0;
+  const hasNext = desktopStartIndex < maxDesktopStartIndex;
+  const desktopTrackTransform = `translateX(-${desktopStartIndex * desktopItemWidthPercent}%)`;
+
+  function handlePrevPage() {
+    if (!hasPrev) {
+      return;
+    }
+
+    setDesktopStartIndex((index) => Math.max(0, index - 1));
+  }
+
+  function handleNextPage() {
+    if (!hasNext) {
+      return;
+    }
+
+    setDesktopStartIndex((index) => Math.min(maxDesktopStartIndex, index + 1));
+  }
 
   return (
     <section className="space-y-5 pt-12">
@@ -61,7 +74,7 @@ export function ProductRecommendations({ items }: Readonly<ProductRecommendation
         <div className="hidden items-center gap-2 md:flex">
           <button
             type="button"
-            onClick={() => setDesktopPageIndex((index) => Math.max(0, index - 1))}
+            onClick={handlePrevPage}
             disabled={!hasPrev}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 text-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="上一組推薦商品"
@@ -70,7 +83,7 @@ export function ProductRecommendations({ items }: Readonly<ProductRecommendation
           </button>
           <button
             type="button"
-            onClick={() => setDesktopPageIndex((index) => Math.min(desktopPages.length - 1, index + 1))}
+            onClick={handleNextPage}
             disabled={!hasNext}
             className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-zinc-200 text-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="下一組推薦商品"
@@ -90,10 +103,23 @@ export function ProductRecommendations({ items }: Readonly<ProductRecommendation
         </div>
       </div>
 
-      <div className="hidden grid-cols-3 gap-3 md:grid">
-        {visibleDesktopItems.map((item) => (
-          <ProductCard key={item.slug} item={item} />
-        ))}
+      <div className="hidden md:block">
+        <div className="overflow-hidden">
+          <div
+            className="motion-slide-x -mx-1.5 flex"
+            style={{ transform: desktopTrackTransform }}
+          >
+            {items.map((item) => (
+              <div
+                key={item.slug}
+                className="shrink-0 px-1.5"
+                style={{ width: `${desktopItemWidthPercent}%` }}
+              >
+                <ProductCard item={item} />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

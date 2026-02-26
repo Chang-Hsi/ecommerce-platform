@@ -29,7 +29,7 @@ Jira 對應：
 | M0 產品定義與規格凍結 | Todo | - | MVP、流程、狀態機、API 規範 |
 | M1 全棧骨架與基礎部署 | Done | 2026-02-25 | Next 全棧、/admin、/api/health、Prisma 基礎、Vercel 部署成功 |
 | M2 前台 IA 與路由結構 | Done | 2026-02-25 | AppLayout、Header Mega Menu、路由規劃、query 規範、mobile-first 導覽完成 |
-| M3 前台 UI 文件與靜態落地 | Todo | - | 先 docs 再實作、mock data |
+| M3 前台 UI 文件與靜態落地 | Todo | - | 進行中：首頁、產品頁(PLP)、購物車頁已完成；下一步收藏頁 |
 | M4 資料庫建模與遷移 | Todo | - | Prisma schema/migration/seed |
 | M5 API 落地與前台串接 | Todo | - | products/cart/orders + Auth/RBAC 基礎 |
 | M6 前台文件收斂 | Todo | - | README/API docs/排錯文件 |
@@ -85,6 +85,14 @@ Jira 對應：
 - [x] 篩選可透過 URL 還原狀態
 
 ## M3 前台 UI 文件與靜態落地
+
+### Progress Snapshot（2026-02-26）
+- [x] 首頁靜態落地
+- [x] 產品頁（PLP）靜態落地
+- [x] 購物車頁靜態落地
+- [ ] 收藏頁（下一步）
+- [ ] 詳情頁（PDP）
+- [ ] 結帳頁（Checkout）
 
 ### DoD
 - [ ] 每頁先有 UI 規格 md，再進入實作

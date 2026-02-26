@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ProductAccordion } from "@/components/products/ProductAccordion";
 import { ProductMediaGallery } from "@/components/products/ProductMediaGallery";
@@ -10,6 +11,11 @@ import type { ProductDetailContent } from "@/content/product-detail";
 import type { ProductCatalogItem } from "@/content/products";
 import { resolveSafeRedirect } from "@/lib/auth/mock-auth";
 import { addCartItem } from "@/lib/cart/mock-cart";
+import {
+  isFavoriteItemBySlug,
+  MOCK_FAVORITES_CHANGED_EVENT,
+  toggleFavoriteItem,
+} from "@/lib/favorites/mock-favorites";
 import { useMockAuthSession } from "@/hooks/auth/useMockAuthSession";
 import { useProductDetailController } from "@/hooks/products/useProductDetailController";
 
@@ -22,6 +28,7 @@ export function ProductDetailView({ detail, recommendations }: Readonly<ProductD
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated } = useMockAuthSession();
+  const [isFavorite, setIsFavorite] = useState(() => isFavoriteItemBySlug(detail.slug));
 
   const {
     activeMediaIndex,
@@ -29,18 +36,32 @@ export function ProductDetailView({ detail, recommendations }: Readonly<ProductD
     canGoNextMedia,
     selectedSize,
     sizeError,
-    isFavorite,
     openAccordionKey,
     selectMedia,
     goPrevMedia,
     goNextMedia,
     selectSize,
     ensureSizeSelected,
-    toggleFavorite,
     toggleAccordion,
   } = useProductDetailController({
     mediaCount: detail.media.length,
   });
+
+  useEffect(() => {
+    function syncFavoriteState() {
+      setIsFavorite(isFavoriteItemBySlug(detail.slug));
+    }
+
+    syncFavoriteState();
+
+    window.addEventListener("storage", syncFavoriteState);
+    window.addEventListener(MOCK_FAVORITES_CHANGED_EVENT, syncFavoriteState as EventListener);
+
+    return () => {
+      window.removeEventListener("storage", syncFavoriteState);
+      window.removeEventListener(MOCK_FAVORITES_CHANGED_EVENT, syncFavoriteState as EventListener);
+    };
+  }, [detail.slug]);
 
   function handleAddToCart() {
     const selected = ensureSizeSelected();
@@ -67,6 +88,29 @@ export function ProductDetailView({ detail, recommendations }: Readonly<ProductD
     });
   }
 
+  function handleToggleFavorite() {
+    if (!isAuthenticated) {
+      const safeRedirect = resolveSafeRedirect(pathname || `/products/${detail.slug}`);
+      router.push(`/login?redirect=${encodeURIComponent(safeRedirect)}`);
+      return;
+    }
+
+    const activeImageSrc = detail.media[activeMediaIndex]?.imageSrc ?? detail.media[0]?.imageSrc ?? "";
+    const result = toggleFavoriteItem({
+      slug: detail.slug,
+      name: detail.name,
+      subtitle: detail.subtitle,
+      imageSrc: activeImageSrc,
+      price: detail.pricing.price,
+      compareAtPrice: detail.pricing.compareAtPrice,
+      colorLabel: detail.specs.color,
+      defaultSize: selectedSize ?? undefined,
+      requiresSizeSelection: detail.sizes.some((size) => size.inStock),
+    });
+
+    setIsFavorite(result.isFavorite);
+  }
+
   return (
     <div className="relative left-1/2 right-1/2 -mx-[50vw] w-screen bg-zinc-100">
       <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-10">
@@ -89,7 +133,7 @@ export function ProductDetailView({ detail, recommendations }: Readonly<ProductD
               isFavorite={isFavorite}
               onSelectSize={selectSize}
               onAddToCart={handleAddToCart}
-              onToggleFavorite={toggleFavorite}
+              onToggleFavorite={handleToggleFavorite}
             />
 
             <ProductSpecs description={detail.description} specs={detail.specs} />
