@@ -22,7 +22,7 @@ export const defaultMockFavoriteItems: MockFavoriteItem[] = [
   {
     id: "air-max-95-big-bubble",
     slug: "air-max-95-big-bubble",
-    name: "Nike Air Max 95 Big Bubble",
+    name: "SwooshLab Air Max 95 Big Bubble",
     subtitle: "女鞋",
     imageSrc: "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=900&q=80",
     price: 5400,
@@ -33,9 +33,9 @@ export const defaultMockFavoriteItems: MockFavoriteItem[] = [
     addedAt: "2026-02-26T10:05:00.000Z",
   },
   {
-    id: "nike-air-max-95-kids",
-    slug: "nike-air-max-95-kids",
-    name: "Nike Air Max '95",
+    id: "SwooshLab-air-max-95-kids",
+    slug: "SwooshLab-air-max-95-kids",
+    name: "SwooshLab Air Max '95",
     subtitle: "兒童款",
     imageSrc: "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=900&q=80",
     price: 3500,

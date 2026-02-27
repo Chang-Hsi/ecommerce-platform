@@ -36,10 +36,10 @@ export const snkrsUserLocations: Record<SnkrsMapCity, SnkrsUserLocation> = {
 export const snkrsTaiwanNorthStores: SnkrsStoreLocation[] = [
   {
     id: "store-tyo-1",
-    name: "Nike Unite 桃園華泰",
+    name: "SwooshLab Unite 桃園華泰",
     city: "桃園",
     distanceKm: 3,
-    shortLabel: "NIKE",
+    shortLabel: "SwooshLab",
     lat: 25.013,
     lng: 121.212,
     address: "桃園市中壢區春德路189號\nTaoyuan, 320",

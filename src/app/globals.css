@@ -113,6 +113,18 @@ body {
   }
 }
 
+@keyframes slideInRightC {
+  from {
+    transform: translateX(1080px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+
 @keyframes slideInUp {
   from {
     transform: translateY(var(--anim-distance, 32px));
@@ -189,6 +201,11 @@ body {
 
 .slide-right-in {
   animation: slideInRight var(--anim-duration, 700ms)
+    var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--anim-delay, 0ms) both;
+}
+
+.slide-right-in-c {
+  animation: slideInRightC var(--anim-duration, 700ms)
     var(--anim-ease, cubic-bezier(0.22, 1, 0.36, 1)) var(--anim-delay, 0ms) both;
 }
 

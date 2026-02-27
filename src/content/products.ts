@@ -6,7 +6,7 @@ export type ProductPriceOption = "低於 $1,500" | "$1,500 - $3,000" | "$3,000 -
 export type ProductBrandOption =
   | "Sportswear"
   | "Jordan"
-  | "NikeLab"
+  | "SwooshLabLab"
   | "ACG"
   | "NOCTA"
   | "Converse"
@@ -102,7 +102,7 @@ export const productsFilterOptions = {
   gender: ["男子", "女子", "中性"] as ProductGenderOption[],
   kids: ["男童", "女童款"] as ProductKidsOption[],
   price: ["低於 $1,500", "$1,500 - $3,000", "$3,000 - $5,000", "$5,000 以上"] as ProductPriceOption[],
-  brand: ["Sportswear", "Jordan", "NikeLab", "ACG", "NOCTA", "Converse", "SB", "Golf"] as ProductBrandOption[],
+  brand: ["Sportswear", "Jordan", "SwooshLabLab", "ACG", "NOCTA", "Converse", "SB", "Golf"] as ProductBrandOption[],
   sport: [
     "運動生活",
     "跑步",
@@ -144,7 +144,7 @@ export const productsColorOptions: ProductColorOption[] = [
 export const productsContent: ProductCatalogItem[] = [
   {
     slug: "air-max-95-og",
-    name: "Nike Air Max 95 OG",
+    name: "SwooshLab Air Max 95 OG",
     subtitle: "男鞋",
     badge: "即將推出",
     price: 5400,
@@ -166,7 +166,7 @@ export const productsContent: ProductCatalogItem[] = [
   },
   {
     slug: "air-max-95-big-bubble",
-    name: "Nike Air Max 95 Big Bubble",
+    name: "SwooshLab Air Max 95 Big Bubble",
     subtitle: "女鞋",
     badge: "即將推出",
     price: 5400,
@@ -187,8 +187,8 @@ export const productsContent: ProductCatalogItem[] = [
     },
   },
   {
-    slug: "nike-air-max-95-kids",
-    name: "Nike Air Max '95",
+    slug: "SwooshLab-air-max-95-kids",
+    name: "SwooshLab Air Max '95",
     subtitle: "兒童款",
     badge: "即將推出",
     price: 3500,

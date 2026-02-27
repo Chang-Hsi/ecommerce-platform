@@ -111,9 +111,9 @@ const snkrsCards: SnkrsProductItem[] = [
   }),
   buildSnkrsCard({
     id: "in-stock-12",
-    slug: "nike-air-max-95-kids",
+    slug: "SwooshLab-air-max-95-kids",
     tab: "in-stock",
-    subtitle: "Nike Air Max '95",
+    subtitle: "SwooshLab Air Max '95",
     title: "White and Crimson",
   }),
   buildSnkrsCard({
@@ -127,7 +127,7 @@ const snkrsCards: SnkrsProductItem[] = [
   }),
   buildSnkrsCard({
     id: "upcoming-2",
-    slug: "nike-air-max-95-kids",
+    slug: "SwooshLab-air-max-95-kids",
     tab: "upcoming",
     subtitle: "Jordan x Union x Fragment",
     title: "服飾系列",

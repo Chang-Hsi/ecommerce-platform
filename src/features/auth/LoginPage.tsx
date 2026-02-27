@@ -91,7 +91,7 @@ export function LoginPage({ searchParams }: Readonly<LoginPageProps>) {
 
         {errorMessage ? <p className="text-sm text-red-600">{errorMessage}</p> : null}
 
-        <p className="text-base text-zinc-500">繼續即代表我同意 Nike 的隱私權政策與使用條款。</p>
+        <p className="text-base text-zinc-500">繼續即代表我同意 SwooshLab 的隱私權政策與使用條款。</p>
 
         <div className="flex justify-end">
           <button

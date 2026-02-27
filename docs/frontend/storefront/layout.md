@@ -169,3 +169,63 @@
   - `https://www.nike.com/tw/kids`
 - 搜尋導向產品列表（q 參數）：
   - `https://www.nike.com/tw/w?q=%E7%90%83%E5%A0%B4%E9%80%A0%E5%9E%8B&vst=%E7%90%83%E5%A0%B4%E9%80%A0%E5%9E%8B`
+
+## 10. Footer 擴充企劃（M3）
+
+更新日期：2026-02-27
+
+### 10.1 目標
+
+- 參考 Nike Footer 的三欄資訊結構，在既有 Footer 上方新增「導覽連結板塊」。
+- 只保留目前專案已存在的頁面路由，不新增尚未實作頁面。
+- 原本 Footer 內容（`2026 SwooshLab Demo Storefront` + `Admin`）保留在下方。
+
+### 10.2 版位結構
+
+1. 新增板塊（上層）
+- 三欄連結：`資源`、`協助`、`公司`
+- 右上角顯示地區：`台灣`（可先做純文字 + icon，不需切換功能）
+
+2. 既有板塊（下層）
+- 目前 Footer 既有內容維持不變（版權資訊 + Admin 入口）
+
+### 10.3 連結清單（僅保留現有頁面）
+
+`資源`
+- 加入會員：`/join`
+- 新品和精選：`/products?group=new-featured&page=1`
+- 收藏：`/favorites`
+- 購物車：`/cart`
+
+`協助`
+- 取得協助：`/help`
+- 出貨與寄送：`/help/topics/shipping-delivery`
+- 退貨：`/help/topics/returns`
+- 付款選項：`/help/topics/orders-payment`
+- 聯絡我們：`/help/contact`
+
+`公司`
+- 關於 SwooshLab：`/help/topics/company-info`
+
+### 10.4 不納入本次 Footer 的連結
+
+- Nike 指導
+- 傳送意見回饋
+- 投資者
+- 環境永續性
+- 其他尚未有對應路由的公司資訊頁
+
+### 10.5 響應式規格（M3）
+
+- Desktop（>=1024）
+  - 三欄橫向排版 + 右上地區標示。
+- Tablet/Mobile（<1024）
+  - 三欄改為單欄堆疊，間距縮小但連結順序不變。
+  - 既有下層版權列維持在最底部。
+
+### 10.6 驗收標準
+
+- [ ] Footer 新增上層導覽板塊，位置在既有 Footer 內容上方。
+- [ ] 三欄連結均能導向既有可用路由。
+- [ ] 未出現未實作或無對應路由的連結。
+- [ ] 手機/桌機版面不破版，Footer 仍維持在頁面底部。

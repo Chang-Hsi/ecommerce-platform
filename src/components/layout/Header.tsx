@@ -77,14 +77,29 @@ function getMobileQuickLinks(section: HeaderNavSection): HeaderMenuLink[] {
 }
 
 const accountDropdownOptions = [
-  { label: "帳號", value: "account" },
-  { label: "個人檔案", value: "profile" },
   { label: "訂單", value: "orders" },
   { label: "最愛", value: "favorites" },
-  { label: "體驗", value: "experience" },
   { label: "帳號設定", value: "settings" },
   { label: "登出", value: "logout" },
 ];
+
+const promoSlides = [
+  {
+    title: "最高可享 7 折優惠",
+    ctaLabel: "選購我們所有最新優惠商品",
+    href: "/products?sale=true&page=1",
+  },
+  {
+    title: "新品登場，立即探索本週焦點",
+    ctaLabel: "前往新品和精選",
+    href: "/products?group=new-featured&page=1",
+  },
+  {
+    title: "會員專屬精選推薦",
+    ctaLabel: "查看你可能喜歡的商品",
+    href: "/products?sort=popular&page=1",
+  },
+] as const;
 
 function buildReturnPath(pathname: string, searchParams: URLSearchParams) {
   if (pathname.startsWith("/login")) {
@@ -451,6 +466,7 @@ export function Header() {
   const [isMobileDrawerMounted, setIsMobileDrawerMounted] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isSearchLayerOpen, setIsSearchLayerOpen] = useState(false);
+  const [promoSlideIndex, setPromoSlideIndex] = useState(0);
   const isProductsPage = pathname.startsWith("/products");
 
   const derivedActiveMenuId = useMemo(
@@ -473,19 +489,18 @@ export function Header() {
 
   function handleAccountAction(action: string) {
     switch (action) {
+      case "orders":
+        router.push("/cart");
+        return;
       case "favorites":
         router.push("/favorites");
         return;
-      case "experience":
-        router.push("/snkrs");
+      case "settings":
+        router.push("/profile/account");
         return;
       case "logout":
         signOut();
         return;
-      case "account":
-      case "profile":
-      case "orders":
-      case "settings":
       default:
         router.push("/help");
     }
@@ -560,6 +575,16 @@ export function Header() {
 
     document.body.style.overflow = "";
   }, [isMobileDrawerMounted, isSearchLayerOpen]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setPromoSlideIndex((current) => (current + 1) % promoSlides.length);
+    }, 5000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     function updateHeaderOffset() {
@@ -686,7 +711,7 @@ export function Header() {
                 <MagnifyingGlassIcon className="h-6 w-6" aria-hidden />
               </button>
               <Link
-                href={loginHref}
+                href={isAuthenticated ? "/profile/account" : loginHref}
                 className="rounded-full p-2 text-zinc-800"
                 aria-label={isAuthenticated ? "會員中心" : "登入"}
               >
@@ -738,10 +763,17 @@ export function Header() {
         </div>
 
         <div className="border-t border-[var(--border)] bg-zinc-100 px-4 py-2 text-center sm:px-6">
-          <p className="text-xs  text-zinc-900 md:text-base">最高可享 7 折優惠</p>
-          <Link href="/products?sale=true&page=1" className="text-xs font-semibold text-zinc-900 underline md:text-sm">
-            選購我們所有最新優惠商品
-          </Link>
+          <div className="relative overflow-hidden" aria-live="polite">
+            <div key={promoSlideIndex} className="slide-right-in-c">
+              <p className="text-xs text-zinc-900 md:text-base">{promoSlides[promoSlideIndex].title}</p>
+              <Link
+                href={promoSlides[promoSlideIndex].href}
+                className="text-xs font-semibold text-zinc-900 underline md:text-sm"
+              >
+                {promoSlides[promoSlideIndex].ctaLabel}
+              </Link>
+            </div>
+          </div>
         </div>
         </header>
       </div>

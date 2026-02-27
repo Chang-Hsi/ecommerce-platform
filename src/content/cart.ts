@@ -10,7 +10,7 @@ export const defaultMockCartItems: MockCartItem[] = [
   {
     id: "air-max-95-big-bubble-28",
     slug: "air-max-95-big-bubble",
-    name: "Nike Air Max 95 Big Bubble",
+    name: "SwooshLab Air Max 95 Big Bubble",
     subtitle: "天然偏硬草地低筒足球鞋",
     imageSrc: "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=900&q=80",
     colorLabel: "Metallic Red Bronze/Metallic Rose Gold",
@@ -23,7 +23,7 @@ export const defaultMockCartItems: MockCartItem[] = [
   {
     id: "air-max-95-og-25",
     slug: "air-max-95-og",
-    name: 'Nike Phantom 6 High Elite "EA SPORTS FC"',
+    name: 'SwooshLab Phantom 6 High Elite "EA SPORTS FC"',
     subtitle: "天然偏硬草地足球釘鞋",
     imageSrc: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80",
     colorLabel: "多種顏色/Bright Crimson",

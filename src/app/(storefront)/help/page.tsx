@@ -1,10 +1,10 @@
-import { PlaceholderPage } from "@/features/common/PlaceholderPage";
+import { HelpPage } from "@/features/help/HelpPage";
 
-export default function HelpRoutePage() {
-  return (
-    <PlaceholderPage
-      title="協助中心"
-      description="協助中心頁面將在後續里程碑加入常見問題、物流說明與退換貨流程。"
-    />
-  );
+type HelpRoutePageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function HelpRoutePage({ searchParams }: HelpRoutePageProps) {
+  const resolvedSearchParams = await searchParams;
+  return <HelpPage searchParams={resolvedSearchParams} />;
 }
