@@ -6,12 +6,13 @@ import { useEffect, useMemo } from "react";
 import { FavoritesGrid } from "@/components/favorites/FavoritesGrid";
 import { ProductRecommendations } from "@/components/products/ProductRecommendations";
 import { productsContent } from "@/content/products";
-import { getMockSession, resolveSafeRedirect } from "@/lib/auth/mock-auth";
+import { resolveSafeRedirect } from "@/lib/auth/mock-auth";
+import { useMockAuthSession } from "@/hooks/auth/useMockAuthSession";
 import { useFavoritesController } from "@/hooks/favorites/useFavoritesController";
 
 export function FavoritesPage() {
   const router = useRouter();
-  const hasSession = Boolean(getMockSession());
+  const { isAuthenticated, isReady } = useMockAuthSession();
   const {
     title,
     emptyTitle,
@@ -30,13 +31,13 @@ export function FavoritesPage() {
   }, [items]);
 
   useEffect(() => {
-    if (!hasSession) {
+    if (isReady && !isAuthenticated) {
       const redirect = resolveSafeRedirect("/favorites");
       router.replace(`/login?redirect=${encodeURIComponent(redirect)}`);
     }
-  }, [hasSession, router]);
+  }, [isAuthenticated, isReady, router]);
 
-  if (!hasSession) {
+  if (!isReady || !isAuthenticated) {
     return null;
   }
 

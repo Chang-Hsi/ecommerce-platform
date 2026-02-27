@@ -7,7 +7,7 @@ export function CheckoutSuccessPage() {
         <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Order Confirmed</p>
         <h1 className="text-4xl font-semibold text-zinc-900 sm:text-3xl">訂單已建立</h1>
         <p className="text-base text-zinc-600">
-          你的訂單已成功送出。M3 階段為 mock 流程，後續里程碑會接上真實付款與訂單追蹤。
+          你的訂單已成功送出。付款流程會在 M7 串接 Stripe 測試金流，現階段僅建立訂單與付款待處理狀態。
         </p>
       </div>
 

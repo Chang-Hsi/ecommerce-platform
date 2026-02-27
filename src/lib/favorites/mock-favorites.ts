@@ -1,3 +1,9 @@
+import {
+  addFavoriteBySlugFromApi,
+  fetchFavoriteItemsFromApi,
+  removeFavoriteBySlugFromApi,
+} from "@/lib/api/favorites";
+import { getMockSession } from "@/lib/auth/mock-auth";
 import { defaultMockFavoriteItems } from "@/content/favorites";
 import type {
   AddFavoriteItemInput,
@@ -56,6 +62,12 @@ function writeFavoriteItems(items: MockFavoriteItem[]) {
   localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(items));
 }
 
+function replaceFavoriteItems(items: MockFavoriteItem[]) {
+  writeFavoriteItems(items);
+  emitFavoritesChanged();
+  return items;
+}
+
 function ensureFavoriteItems() {
   if (!isBrowser()) {
     return defaultMockFavoriteItems;
@@ -90,6 +102,24 @@ export function getFavoriteItems() {
   return ensureFavoriteItems();
 }
 
+export async function syncFavoriteItemsFromApi() {
+  if (!isBrowser()) {
+    return defaultMockFavoriteItems;
+  }
+
+  if (!getMockSession()) {
+    return replaceFavoriteItems([]);
+  }
+
+  try {
+    const items = await fetchFavoriteItemsFromApi();
+    return replaceFavoriteItems(items);
+  } catch (error) {
+    console.error("[mock-favorites] syncFavoriteItemsFromApi failed", error);
+    return getFavoriteItems();
+  }
+}
+
 export function getFavoriteItemById(itemId: string) {
   return getFavoriteItems().find((item) => item.id === itemId) ?? null;
 }
@@ -111,23 +141,51 @@ export function addFavoriteItem(input: AddFavoriteItemInput) {
     ? existingItems.map((item) => (item.slug === input.slug ? { ...nextItem, addedAt: item.addedAt } : item))
     : [nextItem, ...existingItems];
 
-  writeFavoriteItems(nextItems);
-  emitFavoritesChanged();
+  replaceFavoriteItems(nextItems);
   emitFavoritePanelOpen({ itemId: nextItem.id });
+
+  void addFavoriteBySlugFromApi(input.slug)
+    .then((items) => {
+      replaceFavoriteItems(items);
+    })
+    .catch((error) => {
+      console.error("[mock-favorites] addFavoriteBySlugFromApi failed", error);
+    });
+
   return nextItem;
 }
 
 export function removeFavoriteItem(itemId: string) {
-  const nextItems = getFavoriteItems().filter((item) => item.id !== itemId);
-  writeFavoriteItems(nextItems);
-  emitFavoritesChanged();
+  const currentItems = getFavoriteItems();
+  const target = currentItems.find((item) => item.id === itemId);
+  const nextItems = currentItems.filter((item) => item.id !== itemId);
+  replaceFavoriteItems(nextItems);
+
+  if (target) {
+    void removeFavoriteBySlugFromApi(target.slug)
+      .then((items) => {
+        replaceFavoriteItems(items);
+      })
+      .catch((error) => {
+        console.error("[mock-favorites] removeFavoriteBySlugFromApi failed", error);
+      });
+  }
+
   return nextItems;
 }
 
 export function removeFavoriteItemBySlug(slug: string) {
   const nextItems = getFavoriteItems().filter((item) => item.slug !== slug);
-  writeFavoriteItems(nextItems);
-  emitFavoritesChanged();
+  replaceFavoriteItems(nextItems);
+
+  void removeFavoriteBySlugFromApi(slug)
+    .then((items) => {
+      replaceFavoriteItems(items);
+    })
+    .catch((error) => {
+      console.error("[mock-favorites] removeFavoriteBySlugFromApi failed", error);
+    });
+
   return nextItems;
 }
 

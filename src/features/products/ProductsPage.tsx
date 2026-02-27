@@ -1,9 +1,25 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
 import { ProductsView } from "@/components/products/ProductsView";
 
-type ProductsPageProps = {
-  searchParams: Record<string, string | string[] | undefined>;
-};
+function mapSearchParams(searchParams: URLSearchParams) {
+  const mapped: Record<string, string | string[]> = {};
 
-export function ProductsPage({ searchParams }: Readonly<ProductsPageProps>) {
-  return <ProductsView searchParams={searchParams} />;
+  for (const key of searchParams.keys()) {
+    const values = searchParams.getAll(key);
+    if (values.length <= 1) {
+      mapped[key] = values[0] ?? "";
+      continue;
+    }
+
+    mapped[key] = values;
+  }
+
+  return mapped;
+}
+
+export function ProductsPage() {
+  const searchParams = useSearchParams();
+  return <ProductsView searchParams={mapSearchParams(searchParams)} />;
 }

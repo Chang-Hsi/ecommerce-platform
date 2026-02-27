@@ -18,14 +18,17 @@ import {
   getProfilePostalCode,
   isValidPostalCode,
 } from "@/lib/profile/location";
-import { clearProfileState, saveProfileAccount } from "@/lib/profile/mock-profile";
 
-type AccountFieldKey = "email" | "birthday" | "country" | "district" | "city" | "postalCode";
+const NAME_PATTERN = /^[A-Za-z\u4e00-\u9fff\s'’-]{1,30}$/;
+
+type AccountFieldKey = "firstName" | "lastName" | "email" | "birthday" | "country" | "district" | "city" | "postalCode";
 type FieldErrors = Partial<Record<AccountFieldKey, string>>;
 
-const allFields: AccountFieldKey[] = ["email", "birthday", "country", "district", "city", "postalCode"];
+const allFields: AccountFieldKey[] = ["firstName", "lastName", "email", "birthday", "country", "district", "city", "postalCode"];
 
 function validate(form: {
+  firstName: string;
+  lastName: string;
   email: string;
   birthday: string;
   country: string;
@@ -34,6 +37,14 @@ function validate(form: {
   postalCode: string;
 }): FieldErrors {
   const errors: FieldErrors = {};
+
+  if (form.firstName.trim() && !NAME_PATTERN.test(form.firstName.trim())) {
+    errors.firstName = "你輸入的字元無效。";
+  }
+
+  if (form.lastName.trim() && !NAME_PATTERN.test(form.lastName.trim())) {
+    errors.lastName = "你輸入的字元無效。";
+  }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
     errors.email = "請輸入有效電子郵件";
@@ -73,11 +84,12 @@ function validate(form: {
 }
 
 export function ProfileAccountSection() {
-  const { state } = useProfileState();
-  const [form, setForm] = useState(state.account);
+  const { state, saveAccount, deleteAccount } = useProfileState();
+  const [draft, setDraft] = useState<Partial<typeof state.account>>({});
   const [errors, setErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<Partial<Record<AccountFieldKey, boolean>>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
 
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
@@ -86,6 +98,7 @@ export function ProfileAccountSection() {
   const [deleteChecked, setDeleteChecked] = useState(false);
 
   const countryOptions = useMemo(() => getProfileCountryOptions(), []);
+  const form = useMemo(() => ({ ...state.account, ...draft }), [state.account, draft]);
   const cityOptions = useMemo(() => getProfileCityOptions(form.country), [form.country]);
   const districtOptions = useMemo(() => getProfileDistrictOptions(form.country, form.city), [form.country, form.city]);
 
@@ -105,10 +118,12 @@ export function ProfileAccountSection() {
   }
 
   function updateField<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
-    setForm((current) => {
+    setDraft((current) => {
+      const base = { ...state.account, ...current };
       const next = { ...current, [key]: value };
+      const nextForm = { ...base, [key]: value };
       if (submitAttempted || touched[key as AccountFieldKey]) {
-        setErrors(validate(next));
+        setErrors(validate(nextForm));
       }
       return next;
     });
@@ -123,7 +138,7 @@ export function ProfileAccountSection() {
       postalCode: "",
     };
 
-    setForm(next);
+    setDraft((current) => ({ ...current, country, city: "", district: "", postalCode: "" }));
     if (submitAttempted || touched.country || touched.city || touched.district || touched.postalCode) {
       setErrors(validate(next));
     }
@@ -137,7 +152,7 @@ export function ProfileAccountSection() {
       postalCode: "",
     };
 
-    setForm(next);
+    setDraft((current) => ({ ...current, city, district: "", postalCode: "" }));
     if (submitAttempted || touched.city || touched.district || touched.postalCode) {
       setErrors(validate(next));
     }
@@ -150,14 +165,15 @@ export function ProfileAccountSection() {
       postalCode: getProfilePostalCode(form.country, form.city, district),
     };
 
-    setForm(next);
+    setDraft((current) => ({ ...current, district, postalCode: next.postalCode }));
     if (submitAttempted || touched.district || touched.postalCode) {
       setErrors(validate(next));
     }
   }
 
-  function handleSave(event: FormEvent<HTMLFormElement>) {
+  async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setRequestError(null);
 
     const nextErrors = validate(form);
     setSubmitAttempted(true);
@@ -173,7 +189,12 @@ export function ProfileAccountSection() {
       return;
     }
 
-    saveProfileAccount(form);
+    try {
+      await saveAccount(form);
+      setDraft({});
+    } catch (error) {
+      setRequestError(error instanceof Error ? error.message : "儲存失敗，請稍後再試。");
+    }
   }
 
   function openDeleteModal() {
@@ -186,14 +207,18 @@ export function ProfileAccountSection() {
     setDeleteModalOpen(false);
   }
 
-  function confirmDeleteAccount() {
+  async function confirmDeleteAccount() {
     if (!deleteChecked) {
       return;
     }
 
-    clearProfileState();
-    signOutMockUser();
-    window.location.href = "/";
+    try {
+      await deleteAccount();
+      signOutMockUser();
+      window.location.href = "/";
+    } catch (error) {
+      setRequestError(error instanceof Error ? error.message : "刪除帳號失敗，請稍後再試。");
+    }
   }
 
   function updatePassword() {
@@ -226,6 +251,26 @@ export function ProfileAccountSection() {
           onBlur={() => markTouched("email")}
           error={getError("email")}
         />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <ProfileFloatingInput
+            id="profile-last-name"
+            label="姓氏"
+            value={form.lastName}
+            onChange={(value) => updateField("lastName", value)}
+            onBlur={() => markTouched("lastName")}
+            error={getError("lastName")}
+          />
+
+          <ProfileFloatingInput
+            id="profile-first-name"
+            label="名字"
+            value={form.firstName}
+            onChange={(value) => updateField("firstName", value)}
+            onBlur={() => markTouched("firstName")}
+            error={getError("firstName")}
+          />
+        </div>
 
         <div className="space-y-2">
           <p className="text-base font-medium text-zinc-900">密碼</p>
@@ -313,6 +358,8 @@ export function ProfileAccountSection() {
         <div className="flex justify-end">
           <ProfileSaveButton disabled={!isDirty} />
         </div>
+
+        {requestError ? <p className="text-sm text-red-600">{requestError}</p> : null}
       </form>
 
       {passwordModalOpen ? (

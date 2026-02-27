@@ -64,33 +64,33 @@ export function ProductsView({ searchParams }: Readonly<ProductsViewProps>) {
       />
 
       <div className="px-4 py-4 sm:px-6 lg:px-10">
-        <aside
-          className={cn(
-            "fixed bottom-4 left-10 z-20 hidden w-[260px] overflow-y-auto pr-2 transition-[transform,opacity] duration-300 lg:block",
-            isSidebarVisible
-              ? "translate-x-0 opacity-100"
-              : "-translate-x-[115%] opacity-0 pointer-events-none",
-          )}
-          style={{ top: `${desktopSidebarTop}px` }}
-        >
-          <nav className="space-y-3 py-4 text-base font-medium text-zinc-900">
-            {productsQuickCategoryLinks.map((item) => (
-              <Link key={item.category} href={buildCategoryHref(item.category)} className="block hover:underline">
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+        <div className={cn(isSidebarVisible ? "lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start lg:gap-8" : "lg:block")}>
+          {isSidebarVisible ? (
+            <aside
+              className="hidden lg:sticky lg:block lg:self-start lg:overflow-y-auto lg:pr-2"
+              style={{
+                top: `${desktopSidebarTop}px`,
+                maxHeight: `calc(100vh - ${desktopSidebarTop + 16}px)`,
+              }}
+            >
+              <nav className="space-y-3 py-4 text-base font-medium text-zinc-900">
+                {productsQuickCategoryLinks.map((item) => (
+                  <Link key={item.category} href={buildCategoryHref(item.category)} className="block hover:underline">
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
 
-          <ProductsFiltersPanel
-            textSizeClass="text-base"
-            selectedFilters={selectedFilters}
-            onToggleFilter={toggleFilter}
-            selectedColors={queryState.colors}
-            onToggleColor={toggleColor}
-          />
-        </aside>
+              <ProductsFiltersPanel
+                textSizeClass="text-base"
+                selectedFilters={selectedFilters}
+                onToggleFilter={toggleFilter}
+                selectedColors={queryState.colors}
+                onToggleColor={toggleColor}
+              />
+            </aside>
+          ) : null}
 
-        <div className={cn("min-w-0 transition-[padding-left] duration-300", isSidebarVisible ? "lg:pl-[292px]" : "lg:pl-0")}>
           <main className="min-w-0">
             <ProductsGrid products={products} />
           </main>

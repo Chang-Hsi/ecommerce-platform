@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { fetchSnkrsDataFromApi, type SnkrsApiPayload } from "@/lib/api/snkrs";
 import { snkrsContent } from "@/content/snkrs";
 import { snkrsInStockCards, snkrsUpcomingCards } from "@/lib/snkrs/mock-snkrs-products";
 import {
@@ -27,6 +28,7 @@ export function useSnkrsController() {
   const searchParams = useSearchParams();
 
   const activeTab = useMemo(() => resolveSnkrsTab(searchParams.get("tab")), [searchParams]);
+  const [apiPayload, setApiPayload] = useState<SnkrsApiPayload | null>(null);
   const [visibleCountByTab, setVisibleCountByTab] = useState<Record<"in-stock" | "upcoming", number>>({
     "in-stock": PAGE_SIZE,
     upcoming: PAGE_SIZE,
@@ -35,12 +37,43 @@ export function useSnkrsController() {
   const [mapCity, setMapCity] = useState<SnkrsMapCity>("taiwan-north");
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
 
-  const productItems = useMemo<SnkrsProductItem[]>(() => {
-    if (activeTab === "upcoming") {
-      return snkrsUpcomingCards;
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSnkrsData() {
+      try {
+        const payload = await fetchSnkrsDataFromApi();
+        if (!isMounted) {
+          return;
+        }
+        setApiPayload(payload);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+        console.error("[useSnkrsController] loadSnkrsData failed", error);
+        setApiPayload(null);
+      }
     }
-    return snkrsInStockCards;
-  }, [activeTab]);
+
+    void loadSnkrsData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const content = apiPayload?.content ?? snkrsContent;
+
+  const productItems = useMemo<SnkrsProductItem[]>(() => {
+    const inStockProducts = apiPayload?.products.inStock ?? snkrsInStockCards;
+    const upcomingProducts = apiPayload?.products.upcoming ?? snkrsUpcomingCards;
+
+    if (activeTab === "upcoming") {
+      return upcomingProducts;
+    }
+    return inStockProducts;
+  }, [activeTab, apiPayload?.products.inStock, apiPayload?.products.upcoming]);
 
   const visibleCount = activeTab === "upcoming" ? visibleCountByTab.upcoming : visibleCountByTab["in-stock"];
 
@@ -54,11 +87,14 @@ export function useSnkrsController() {
   const hasMoreProducts = activeTab !== "map" && visibleCount < productItems.length;
 
   const mapStores = useMemo(
-    () => (mapCity === "taiwan-north" ? snkrsTaiwanNorthStores : snkrsShanghaiStores),
-    [mapCity],
+    () =>
+      mapCity === "taiwan-north"
+        ? (apiPayload?.map.stores.taiwanNorth ?? snkrsTaiwanNorthStores)
+        : (apiPayload?.map.stores.shanghai ?? snkrsShanghaiStores),
+    [apiPayload?.map.stores.shanghai, apiPayload?.map.stores.taiwanNorth, mapCity],
   );
   const hasNearbyStores = mapStores.length > 0;
-  const userLocation = snkrsUserLocations[mapCity];
+  const userLocation = (apiPayload?.map.userLocations ?? snkrsUserLocations)[mapCity];
 
   const selectedStore = useMemo(
     () => mapStores.find((store) => store.id === selectedStoreId) ?? null,
@@ -77,11 +113,11 @@ export function useSnkrsController() {
     return {
       lat: userLocation.lat,
       lng: userLocation.lng,
-      zoom: snkrsMapCenters[mapCity].zoom,
+      zoom: (apiPayload?.map.centers ?? snkrsMapCenters)[mapCity].zoom,
     };
-  }, [mapCity, selectedStore, userLocation]);
+  }, [apiPayload?.map.centers, mapCity, selectedStore, userLocation]);
 
-  const mapNearbyText = `${snkrsContent.mapNearbyPrefix} ${mapStores.length} ${snkrsContent.mapNearbySuffix}`;
+  const mapNearbyText = `${content.mapNearbyPrefix} ${mapStores.length} ${content.mapNearbySuffix}`;
 
   const onChangeTab = useCallback(
     (nextTab: SnkrsTab) => {
@@ -124,7 +160,7 @@ export function useSnkrsController() {
   }, []);
 
   return {
-    content: snkrsContent,
+    content,
     activeTab,
     visibleProducts,
     hasMoreProducts,

@@ -1,10 +1,10 @@
+import { Suspense } from "react";
 import { LoginPage } from "@/features/auth/LoginPage";
 
-type LoginRoutePageProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
-
-export default async function LoginRoutePage({ searchParams }: LoginRoutePageProps) {
-  const resolvedSearchParams = await searchParams;
-  return <LoginPage searchParams={resolvedSearchParams} />;
+export default function LoginRoutePage() {
+  return (
+    <Suspense fallback={<div className="mx-auto w-full max-w-[560px] px-1 py-4 md:py-8" />}>
+      <LoginPage />
+    </Suspense>
+  );
 }

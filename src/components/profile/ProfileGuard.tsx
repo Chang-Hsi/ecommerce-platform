@@ -8,10 +8,10 @@ import { useMockAuthSession } from "@/hooks/auth/useMockAuthSession";
 export function ProfileGuard({ children }: Readonly<{ children: React.ReactNode }>) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated } = useMockAuthSession();
+  const { isAuthenticated, isReady } = useMockAuthSession();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isReady && !isAuthenticated) {
       const liveSession = getMockSession();
       if (liveSession) {
         return;
@@ -21,9 +21,9 @@ export function ProfileGuard({ children }: Readonly<{ children: React.ReactNode 
       const redirect = resolveSafeRedirect(returnPath);
       router.replace(`/login?redirect=${encodeURIComponent(redirect)}`);
     }
-  }, [isAuthenticated, pathname, router]);
+  }, [isAuthenticated, isReady, pathname, router]);
 
-  if (!isAuthenticated) {
+  if (!isReady || !isAuthenticated) {
     return null;
   }
 

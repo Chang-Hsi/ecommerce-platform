@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { fetchProductsFromApi } from "@/lib/api/products";
 import {
   productsContent,
   productsQuickCategoryLinks,
@@ -32,10 +33,47 @@ export function useProductsController({ searchParams }: Readonly<UseProductsCont
   const [isCompactHeader, setIsCompactHeader] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [desktopSidebarTop, setDesktopSidebarTop] = useState(96);
+  const [products, setProducts] = useState(productsContent);
+  const [isProductsLoading, setIsProductsLoading] = useState(true);
 
   const currentParams = useMemo(() => normalizeSearchParams(searchParams), [searchParams]);
   const queryState = useMemo<ProductQueryState>(() => fromSearchParams(searchParams), [searchParams]);
   const pageTitle = useMemo(() => resolveProductsTitle(currentParams), [currentParams]);
+  const apiParams = useMemo(() => toApiParams(queryState), [queryState]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProducts() {
+      setIsProductsLoading(true);
+
+      try {
+        const payload = await fetchProductsFromApi(apiParams);
+        if (!isMounted) {
+          return;
+        }
+
+        setProducts(payload.products);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error("[useProductsController] loadProducts failed", error);
+        setProducts(productsContent);
+      } finally {
+        if (isMounted) {
+          setIsProductsLoading(false);
+        }
+      }
+    }
+
+    void loadProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [apiParams]);
 
   useEffect(() => {
     scrollYRef.current = window.scrollY;
@@ -180,13 +218,14 @@ export function useProductsController({ searchParams }: Readonly<UseProductsCont
   }));
 
   return {
-    products: productsContent,
+    products,
     productsSortOptions,
     productsQuickCategoryLinks,
     mobileCategoryLinks,
     pageTitle,
     queryState,
-    apiParams: toApiParams(queryState),
+    apiParams,
+    isProductsLoading,
     isSidebarVisible,
     isCompactHeader,
     isMobileFilterOpen,

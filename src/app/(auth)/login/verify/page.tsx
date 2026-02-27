@@ -1,10 +1,10 @@
+import { Suspense } from "react";
 import { LoginVerifyPage } from "@/features/auth/LoginVerifyPage";
 
-type LoginVerifyRoutePageProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
-
-export default async function LoginVerifyRoutePage({ searchParams }: LoginVerifyRoutePageProps) {
-  const resolvedSearchParams = await searchParams;
-  return <LoginVerifyPage searchParams={resolvedSearchParams} />;
+export default function LoginVerifyRoutePage() {
+  return (
+    <Suspense fallback={<div className="mx-auto w-full max-w-[560px] px-1 py-4 md:py-8" />}>
+      <LoginVerifyPage />
+    </Suspense>
+  );
 }

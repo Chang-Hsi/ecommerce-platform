@@ -35,6 +35,12 @@ JIRA_PROJECT_KEY=EP
 - `M8 -> EP-10`
 - `M9 -> EP-11`
 
+目前本地文件同步狀態（2026-02-27）：
+- `M3` 已在 `docs/project/milestones.md` 標記為 `Done`
+- Jira issue `EP-5` 已同步為 `完成`
+- Jira issue `EP-6` 已同步為 `完成`
+- `M5` 已進入 `In Progress`（Batch 2 API 落地，Profile API/上傳已完成）
+
 ## 4. 驗證連線
 
 ```bash
@@ -81,4 +87,3 @@ curl -sS -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
 ```
 
 建議同步補一則 comment（測試證據、commit、preview URL）。
-

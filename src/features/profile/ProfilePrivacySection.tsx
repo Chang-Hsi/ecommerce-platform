@@ -2,23 +2,30 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { ProfileSaveButton, ProfileSectionTitle } from "@/components/profile/ProfileFormControls";
-import { saveProfilePrivacy } from "@/lib/profile/mock-profile";
 import { useProfileState } from "@/hooks/profile/useProfileState";
 import type { ProfilePrivacyState } from "@/lib/profile/types";
 
 export function ProfilePrivacySection() {
-  const { state } = useProfileState();
-  const [form, setForm] = useState(state.privacy);
+  const { state, savePrivacy } = useProfileState();
+  const [draft, setDraft] = useState<Partial<ProfilePrivacyState>>({});
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const form = useMemo(() => ({ ...state.privacy, ...draft }), [state.privacy, draft]);
 
   const isDirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(state.privacy), [form, state.privacy]);
 
   function updateField<K extends keyof ProfilePrivacyState>(key: K, value: ProfilePrivacyState[K]) {
-    setForm((current) => ({ ...current, [key]: value }));
+    setDraft((current) => ({ ...current, [key]: value }));
   }
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    saveProfilePrivacy(form);
+    setRequestError(null);
+    try {
+      await savePrivacy(form);
+      setDraft({});
+    } catch (error) {
+      setRequestError(error instanceof Error ? error.message : "儲存隱私設定失敗，請稍後再試。");
+    }
   }
 
   return (
@@ -90,6 +97,8 @@ export function ProfilePrivacySection() {
       <div className="flex justify-end">
         <ProfileSaveButton disabled={!isDirty} />
       </div>
+
+      {requestError ? <p className="text-sm text-red-600">{requestError}</p> : null}
     </form>
   );
 }

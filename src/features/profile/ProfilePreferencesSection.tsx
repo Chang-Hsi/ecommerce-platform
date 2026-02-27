@@ -3,7 +3,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { ProfileFloatingSelect, ProfileSaveButton, ProfileSectionTitle } from "@/components/profile/ProfileFormControls";
 import { profileShoeSizeOptions } from "@/content/profile";
-import { saveProfilePreferences } from "@/lib/profile/mock-profile";
 import { useProfileState } from "@/hooks/profile/useProfileState";
 import type { ProfilePreferencesState } from "@/lib/profile/types";
 
@@ -15,30 +14,39 @@ const otherPreferenceOptions: Array<{ value: ProfilePreferencesState["otherPrefe
 ];
 
 export function ProfilePreferencesSection() {
-  const { state } = useProfileState();
-  const [form, setForm] = useState(state.preferences);
+  const { state, savePreferences } = useProfileState();
+  const [draft, setDraft] = useState<Partial<ProfilePreferencesState>>({});
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const form = useMemo(() => ({ ...state.preferences, ...draft }), [state.preferences, draft]);
 
   const isDirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(state.preferences), [form, state.preferences]);
 
   function updateField<K extends keyof ProfilePreferencesState>(key: K, value: ProfilePreferencesState[K]) {
-    setForm((current) => ({ ...current, [key]: value }));
+    setDraft((current) => ({ ...current, [key]: value }));
   }
 
   function toggleOtherPreference(value: ProfilePreferencesState["otherPreferences"][number]) {
-    setForm((current) => {
-      const exists = current.otherPreferences.includes(value);
+    const exists = form.otherPreferences.includes(value);
+    setDraft((current) => {
+      const merged = { ...state.preferences, ...current };
       return {
         ...current,
         otherPreferences: exists
-          ? current.otherPreferences.filter((item) => item !== value)
-          : [...current.otherPreferences, value],
+          ? merged.otherPreferences.filter((item) => item !== value)
+          : [...merged.otherPreferences, value],
       };
     });
   }
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    saveProfilePreferences(form);
+    setRequestError(null);
+    try {
+      await savePreferences(form);
+      setDraft({});
+    } catch (error) {
+      setRequestError(error instanceof Error ? error.message : "儲存購物偏好失敗，請稍後再試。");
+    }
   }
 
   return (
@@ -125,6 +133,8 @@ export function ProfilePreferencesSection() {
       <div className="flex justify-end">
         <ProfileSaveButton disabled={!isDirty} />
       </div>
+
+      {requestError ? <p className="text-sm text-red-600">{requestError}</p> : null}
     </form>
   );
 }

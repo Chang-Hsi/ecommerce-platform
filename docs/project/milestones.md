@@ -29,9 +29,9 @@ Jira 對應：
 | M0 產品定義與規格凍結 | Todo | - | MVP、流程、狀態機、API 規範 |
 | M1 全棧骨架與基礎部署 | Done | 2026-02-25 | Next 全棧、/admin、/api/health、Prisma 基礎、Vercel 部署成功 |
 | M2 前台 IA 與路由結構 | Done | 2026-02-25 | AppLayout、Header Mega Menu、路由規劃、query 規範、mobile-first 導覽完成 |
-| M3 前台 UI 文件與靜態落地 | Todo | - | 進行中：首頁、產品頁(PLP)、購物車頁已完成；下一步收藏頁 |
-| M4 資料庫建模與遷移 | Todo | - | Prisma schema/migration/seed |
-| M5 API 落地與前台串接 | Todo | - | products/cart/orders + Auth/RBAC 基礎 |
+| M3 前台 UI 文件與靜態落地 | Done | 2026-02-27 | 前台核心頁面與 UI 規格文件完成（Home/PLP/PDP/Favorites/Cart/Checkout/Help/SNKRS/Profile） |
+| M4 資料庫建模與遷移 | Done | 2026-02-27 | Prisma schema 擴充、migration SQL 產生並套用、seed 成功、索引策略文件化 |
+| M5 API 落地與前台串接 | In Progress | - | 已完成 auth/products/cart/favorites/help/snkrs/profile API 與前台串接；orders/checkout 待接續 |
 | M6 前台文件收斂 | Todo | - | README/API docs/排錯文件 |
 | M7 Stripe 測試金流閉環 | Todo | - | checkout + webhook + idempotency |
 | M8 後台管理站落地 | Todo | - | AdminLayout + CRUD + 權限 |
@@ -86,42 +86,66 @@ Jira 對應：
 
 ## M3 前台 UI 文件與靜態落地
 
-### Progress Snapshot（2026-02-26）
+### Progress Snapshot（2026-02-27）
 - [x] 首頁靜態落地
 - [x] 產品頁（PLP）靜態落地
+- [x] 詳情頁（PDP）靜態落地
+- [x] 收藏頁（Favorites）靜態落地
 - [x] 購物車頁靜態落地
-- [ ] 收藏頁（下一步）
-- [ ] 詳情頁（PDP）
-- [ ] 結帳頁（Checkout）
+- [x] 結帳頁（Checkout）靜態落地
+- [x] 協助頁（Help）靜態落地
+- [x] SNKRS 頁靜態落地
+- [x] 帳號設定頁（Profile）靜態落地
 
 ### DoD
-- [ ] 每頁先有 UI 規格 md，再進入實作
-- [ ] 完成首頁、列表頁(PLP)、詳情頁(PDP)、購物車、結帳頁
-- [ ] 資料來自 mock data（可集中維護）
-- [ ] UI 與資料型別對齊（schema first）
+- [x] 每頁先有 UI 規格 md，再進入實作
+- [x] 完成首頁、列表頁(PLP)、詳情頁(PDP)、購物車、結帳頁
+- [x] 資料來自 mock data（可集中維護）
+- [x] UI 與資料型別對齊（schema first）
 
 ### 驗收 checklist
-- [ ] `docs/ui/storefront/home.md`
-- [ ] `docs/ui/storefront/plp.md`
-- [ ] `docs/ui/storefront/pdp.md`
-- [ ] `docs/ui/storefront/cart-checkout.md`
-- [ ] 主要流程可從首頁一路操作到結帳
+- [x] `docs/frontend/storefront/home.md`
+- [x] `docs/frontend/storefront/product.md`
+- [x] `docs/frontend/storefront/cart.md`
+- [x] `docs/frontend/storefront/favorites.md`
+- [x] `docs/frontend/storefront/checkout.md`
+- [x] `docs/frontend/storefront/help.md`
+- [x] `docs/frontend/storefront/snkrs.md`
+- [x] `docs/frontend/storefront/profile.md`
+- [x] 主要流程可從首頁一路操作到結帳
 
 ## M4 資料庫建模與遷移
 
 ### DoD
-- [ ] Prisma schema 完成核心實體
-- [ ] migration/seed/rollback 流程可用
-- [ ] mock data 可 seed 到 PostgreSQL
-- [ ] 索引策略覆蓋主要篩選與排序
+- [x] Prisma schema 完成核心實體
+- [x] migration/seed/rollback 流程可用
+- [x] mock data 可 seed 到 PostgreSQL
+- [x] 索引策略覆蓋主要篩選與排序
 
 ### 驗收 checklist
-- [ ] `prisma/schema.prisma`
-- [ ] migration 可重複執行
-- [ ] seed 成功
-- [ ] `docs/backend/database.md`
+- [x] `prisma/schema.prisma`
+- [x] migration 可重複執行
+- [x] seed 成功
+- [x] `docs/backend/database.md`
 
 ## M5 API 落地與前台串接
+
+### Progress Snapshot（2026-02-27）
+- [x] API 契約統一為 `code/message/data`
+- [x] `request` 前端 client（同源 `credentials: include`）建立
+- [x] Auth API 第一版：`/api/auth/login/request-code`、`/api/auth/login/verify`、`/api/auth/session`、`/api/auth/logout`
+- [x] Auth API 第二版（JWT）：新增 `/api/auth/refresh`、access/refresh token rotation
+- [x] Email OTP 流程：SMTP 寄信（未配置 SMTP 時 dev fallback `debugCode`）
+- [x] Products API 第一版：`/api/products`、`/api/products/[slug]`
+- [x] Favorites API 第一版：`/api/favorites`、`/api/favorites/[slug]`
+- [x] Cart API 第一版：`/api/cart`、`/api/cart/items`、`/api/cart/items/[itemId]`
+- [x] Help/SNKRS API 第一版：`/api/help`、`/api/snkrs`
+- [x] 前台首批串接：Home、Login、Login Verify、PLP、PDP、Favorites、Cart（含 mini/favorite panel 同步機制）
+- [x] Profile API 第二版：`/api/profile*`（account/addresses/preferences/privacy/visibility/avatar）
+- [x] 帳號設定前台串接：`/profile/*` 改由 API + DB 驅動
+- [x] 頭像上傳：FormData + Sharp(WebP) + Cloudinary + DB URL
+- [x] 首次登入資料策略：僅 email + passwordMask，其他欄位留空
+- [ ] Orders/Checkout API
 
 ### DoD
 - [ ] 完成 products/cart/orders API

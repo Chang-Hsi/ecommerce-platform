@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { MOCK_AUTH_CHANGED_EVENT } from "@/lib/auth/mock-auth";
 import {
   getFavoriteItemById,
   getFavoriteItems,
   MOCK_FAVORITES_CHANGED_EVENT,
   MOCK_FAVORITE_PANEL_OPEN_EVENT,
+  syncFavoriteItemsFromApi,
 } from "@/lib/favorites/mock-favorites";
 import type { FavoritePanelOpenPayload, MockFavoriteItem } from "@/lib/favorites/types";
 
@@ -17,6 +19,11 @@ export function useFavoritePanelController() {
   useEffect(() => {
     function syncItems() {
       setItems(getFavoriteItems());
+    }
+
+    async function syncRemoteItems() {
+      const remoteItems = await syncFavoriteItemsFromApi();
+      setItems(remoteItems);
     }
 
     function onPanelOpen(event: Event) {
@@ -32,15 +39,22 @@ export function useFavoritePanelController() {
     }
 
     syncItems();
+    void syncRemoteItems();
+
+    function handleAuthChanged() {
+      void syncRemoteItems();
+    }
 
     window.addEventListener("storage", syncItems);
     window.addEventListener(MOCK_FAVORITES_CHANGED_EVENT, syncItems as EventListener);
     window.addEventListener(MOCK_FAVORITE_PANEL_OPEN_EVENT, onPanelOpen as EventListener);
+    window.addEventListener(MOCK_AUTH_CHANGED_EVENT, handleAuthChanged as EventListener);
 
     return () => {
       window.removeEventListener("storage", syncItems);
       window.removeEventListener(MOCK_FAVORITES_CHANGED_EVENT, syncItems as EventListener);
       window.removeEventListener(MOCK_FAVORITE_PANEL_OPEN_EVENT, onPanelOpen as EventListener);
+      window.removeEventListener(MOCK_AUTH_CHANGED_EVENT, handleAuthChanged as EventListener);
     };
   }, []);
 

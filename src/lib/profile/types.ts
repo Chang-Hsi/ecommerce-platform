@@ -7,7 +7,8 @@ export type ProfileSectionId =
 
 export type ProfileAddress = {
   id: string;
-  recipientName: string;
+  recipientLastName: string;
+  recipientFirstName: string;
   phone: string;
   country: string;
   city: string;
@@ -20,6 +21,8 @@ export type ProfileAddress = {
 };
 
 export type ProfileAccountState = {
+  firstName: string;
+  lastName: string;
   email: string;
   passwordMask: string;
   birthday: string;
@@ -39,6 +42,7 @@ export type ProfilePreferencesState = {
 export type ProfileVisibilityState = {
   displayName: string;
   avatarText: string;
+  avatarUrl: string;
   reviewVisibility: "private" | "community" | "public";
   locationSharing: "friends" | "none";
 };

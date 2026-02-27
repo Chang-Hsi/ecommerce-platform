@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { cartMessages } from "@/content/cart";
+import { MOCK_AUTH_CHANGED_EVENT } from "@/lib/auth/mock-auth";
 import {
   changeCartItemQty,
   getCartItems,
   getCartSummary,
   MOCK_CART_CHANGED_EVENT,
   removeCartItem,
+  syncCartItemsFromApi,
   toggleCartItemFavorite,
 } from "@/lib/cart/mock-cart";
 import type { MockCartItem } from "@/lib/cart/types";
@@ -20,14 +22,26 @@ export function useCartController() {
       setItems(getCartItems());
     }
 
+    async function syncRemote() {
+      const remoteItems = await syncCartItemsFromApi();
+      setItems(remoteItems);
+    }
+
     sync();
+    void syncRemote();
+
+    function handleAuthChanged() {
+      void syncRemote();
+    }
 
     window.addEventListener("storage", sync);
     window.addEventListener(MOCK_CART_CHANGED_EVENT, sync as EventListener);
+    window.addEventListener(MOCK_AUTH_CHANGED_EVENT, handleAuthChanged as EventListener);
 
     return () => {
       window.removeEventListener("storage", sync);
       window.removeEventListener(MOCK_CART_CHANGED_EVENT, sync as EventListener);
+      window.removeEventListener(MOCK_AUTH_CHANGED_EVENT, handleAuthChanged as EventListener);
     };
   }, []);
 

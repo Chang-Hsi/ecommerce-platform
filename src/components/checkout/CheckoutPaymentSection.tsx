@@ -14,6 +14,9 @@ type CheckoutPaymentSectionProps = {
   promoInput: string;
   appliedPromo: CheckoutPromo | null;
   promoMessage: string | null;
+  submitError: string | null;
+  isApplyingPromo: boolean;
+  isPlacingOrder: boolean;
   isPlaceOrderDisabled: boolean;
   onUpdateField: <K extends keyof CheckoutFormState>(key: K, value: CheckoutFormState[K]) => void;
   onTouchField: <K extends keyof CheckoutFormState>(key: K) => void;
@@ -51,6 +54,9 @@ export function CheckoutPaymentSection({
   promoInput,
   appliedPromo,
   promoMessage,
+  submitError,
+  isApplyingPromo,
+  isPlacingOrder,
   isPlaceOrderDisabled,
   onUpdateField,
   onTouchField,
@@ -75,9 +81,10 @@ export function CheckoutPaymentSection({
           <button
             type="button"
             onClick={onApplyPromo}
+            disabled={isApplyingPromo}
             className="h-14 rounded-full border border-zinc-300 px-8 text-base font-semibold text-zinc-700"
           >
-            套用
+            {isApplyingPromo ? "套用中..." : "套用"}
           </button>
         </div>
         <p className="text-sm text-zinc-500">{checkoutContent.promoHint}</p>
@@ -173,18 +180,19 @@ export function CheckoutPaymentSection({
           </div>
         </section>
       ) : (
-        <p className="text-base text-zinc-600">M3 階段僅提供付款方式選擇 UI，實際付款流程於後續里程碑串接。</p>
+        <p className="text-base text-zinc-600">M5 階段僅提供付款方式選擇 UI，實際金流於 M7 串接。</p>
       )}
 
       <section className="space-y-4 border-t border-zinc-200 pt-6">
         <p className="text-sm leading-6 text-zinc-500">{checkoutContent.placeOrderDisclaimer}</p>
+        {submitError ? <p className="text-sm text-red-600">{submitError}</p> : null}
         <button
           type="button"
           onClick={onPlaceOrder}
           disabled={isPlaceOrderDisabled}
           className="h-16 w-full rounded-full bg-zinc-900 text-2xl font-semibold text-white disabled:bg-zinc-300 sm:text-xl"
         >
-          {checkoutContent.placeOrderButtonLabel}
+          {isPlacingOrder ? "處理中..." : checkoutContent.placeOrderButtonLabel}
         </button>
       </section>
     </section>

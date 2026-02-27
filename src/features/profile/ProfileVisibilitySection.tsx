@@ -1,25 +1,55 @@
 "use client";
 
 import { UserCircleIcon } from "@heroicons/react/24/solid";
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { ProfileSaveButton, ProfileSectionTitle } from "@/components/profile/ProfileFormControls";
-import { saveProfileVisibility } from "@/lib/profile/mock-profile";
 import { useProfileState } from "@/hooks/profile/useProfileState";
 import type { ProfileVisibilityState } from "@/lib/profile/types";
 
 export function ProfileVisibilitySection() {
-  const { state } = useProfileState();
-  const [form, setForm] = useState(state.visibility);
+  const { state, saveVisibility, uploadAvatar } = useProfileState();
+  const [draft, setDraft] = useState<Partial<ProfileVisibilityState>>({});
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const form = useMemo(() => ({ ...state.visibility, ...draft }), [state.visibility, draft]);
 
   const isDirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(state.visibility), [form, state.visibility]);
 
   function updateField<K extends keyof ProfileVisibilityState>(key: K, value: ProfileVisibilityState[K]) {
-    setForm((current) => ({ ...current, [key]: value }));
+    setDraft((current) => ({ ...current, [key]: value }));
   }
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    saveProfileVisibility(form);
+    setRequestError(null);
+    try {
+      await saveVisibility(form);
+      setDraft({});
+    } catch (error) {
+      setRequestError(error instanceof Error ? error.message : "儲存個人檔案能見度失敗，請稍後再試。");
+    }
+  }
+
+  async function onFileSelected(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setUploadError(null);
+    setRequestError(null);
+    setIsUploading(true);
+
+    try {
+      await uploadAvatar(file);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "頭像上傳失敗，請稍後再試。");
+    } finally {
+      setIsUploading(false);
+      event.target.value = "";
+    }
   }
 
   return (
@@ -31,19 +61,39 @@ export function ProfileVisibilitySection() {
 
       <section className="flex flex-wrap items-center gap-4 border-b border-zinc-200 pb-6">
         <div className="relative">
-          <UserCircleIcon className="h-20 w-20 text-zinc-300" aria-hidden />
+          {form.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={form.avatarUrl}
+              alt="個人頭像"
+              className="h-20 w-20 rounded-full border border-zinc-200 object-cover"
+            />
+          ) : (
+            <UserCircleIcon className="h-20 w-20 text-zinc-300" aria-hidden />
+          )}
         </div>
 
         <div className="space-y-2">
           <p className="text-base font-medium text-zinc-900">{form.displayName}</p>
           <p className="text-base text-zinc-600">{form.avatarText}</p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(event) => {
+              void onFileSelected(event);
+            }}
+          />
           <button
             type="button"
-            onClick={() => window.alert("M3 先以 mock 流程處理頭像編輯")}
-            className="inline-flex h-9 items-center rounded-full border border-zinc-300 px-4 text-base text-zinc-900"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="inline-flex h-9 items-center rounded-full border border-zinc-300 px-4 text-base text-zinc-900 disabled:opacity-50"
           >
-            編輯
+            {isUploading ? "上傳中..." : "編輯"}
           </button>
+          {uploadError ? <p className="text-sm text-red-600">{uploadError}</p> : null}
         </div>
       </section>
 
@@ -113,6 +163,8 @@ export function ProfileVisibilitySection() {
       <div className="flex justify-end">
         <ProfileSaveButton disabled={!isDirty} />
       </div>
+
+      {requestError ? <p className="text-sm text-red-600">{requestError}</p> : null}
     </form>
   );
 }

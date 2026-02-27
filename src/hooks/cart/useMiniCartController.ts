@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { MOCK_AUTH_CHANGED_EVENT } from "@/lib/auth/mock-auth";
 import {
   getCartItemById,
   getCartItemCount,
   getCartItems,
   MOCK_CART_CHANGED_EVENT,
   MOCK_MINI_CART_OPEN_EVENT,
+  syncCartItemsFromApi,
 } from "@/lib/cart/mock-cart";
 import type { MiniCartOpenPayload, MockCartItem } from "@/lib/cart/types";
 
@@ -18,6 +20,11 @@ export function useMiniCartController() {
   useEffect(() => {
     function syncItems() {
       setItems(getCartItems());
+    }
+
+    async function syncRemoteItems() {
+      const remoteItems = await syncCartItemsFromApi();
+      setItems(remoteItems);
     }
 
     function onMiniCartOpen(event: Event) {
@@ -33,15 +40,22 @@ export function useMiniCartController() {
     }
 
     syncItems();
+    void syncRemoteItems();
+
+    function handleAuthChanged() {
+      void syncRemoteItems();
+    }
 
     window.addEventListener("storage", syncItems);
     window.addEventListener(MOCK_CART_CHANGED_EVENT, syncItems as EventListener);
     window.addEventListener(MOCK_MINI_CART_OPEN_EVENT, onMiniCartOpen as EventListener);
+    window.addEventListener(MOCK_AUTH_CHANGED_EVENT, handleAuthChanged as EventListener);
 
     return () => {
       window.removeEventListener("storage", syncItems);
       window.removeEventListener(MOCK_CART_CHANGED_EVENT, syncItems as EventListener);
       window.removeEventListener(MOCK_MINI_CART_OPEN_EVENT, onMiniCartOpen as EventListener);
+      window.removeEventListener(MOCK_AUTH_CHANGED_EVENT, handleAuthChanged as EventListener);
     };
   }, []);
 

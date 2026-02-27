@@ -9,11 +9,11 @@ import {
   getProfilePostalCode,
   isValidPostalCode,
 } from "@/lib/profile/location";
-import { addProfileAddress, removeProfileAddress } from "@/lib/profile/mock-profile";
 import { useProfileState } from "@/hooks/profile/useProfileState";
 
 type AddressFormState = {
-  recipientName: string;
+  recipientLastName: string;
+  recipientFirstName: string;
   phone: string;
   country: string;
   city: string;
@@ -27,7 +27,8 @@ type AddressFieldKey = keyof Omit<AddressFormState, "isDefault">;
 type AddressFormErrors = Partial<Record<AddressFieldKey, string>>;
 
 const emptyAddressForm: AddressFormState = {
-  recipientName: "",
+  recipientLastName: "",
+  recipientFirstName: "",
   phone: "",
   country: "台灣",
   city: "",
@@ -38,7 +39,8 @@ const emptyAddressForm: AddressFormState = {
 };
 
 const addressFields: AddressFieldKey[] = [
-  "recipientName",
+  "recipientLastName",
+  "recipientFirstName",
   "phone",
   "country",
   "city",
@@ -54,10 +56,16 @@ function isValidName(value: string) {
 function validateAddress(form: AddressFormState): AddressFormErrors {
   const errors: AddressFormErrors = {};
 
-  if (!form.recipientName.trim()) {
-    errors.recipientName = "請輸入收件人姓名";
-  } else if (!isValidName(form.recipientName)) {
-    errors.recipientName = "你輸入的字元無效。";
+  if (!form.recipientLastName.trim()) {
+    errors.recipientLastName = "請輸入收件人姓氏";
+  } else if (!isValidName(form.recipientLastName)) {
+    errors.recipientLastName = "你輸入的字元無效。";
+  }
+
+  if (!form.recipientFirstName.trim()) {
+    errors.recipientFirstName = "請輸入收件人名字";
+  } else if (!isValidName(form.recipientFirstName)) {
+    errors.recipientFirstName = "你輸入的字元無效。";
   }
 
   if (!/^\+?\d[\d\s-]{7,14}$/.test(form.phone.trim())) {
@@ -90,12 +98,13 @@ function validateAddress(form: AddressFormState): AddressFormErrors {
 }
 
 export function ProfileAddressesSection() {
-  const { state } = useProfileState();
+  const { state, addAddress, removeAddress } = useProfileState();
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<AddressFormState>(emptyAddressForm);
   const [errors, setErrors] = useState<AddressFormErrors>({});
   const [touched, setTouched] = useState<Partial<Record<AddressFieldKey, boolean>>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
 
   const hasAddresses = state.addresses.length > 0;
   const countryOptions = useMemo(() => getProfileCountryOptions(), []);
@@ -179,6 +188,7 @@ export function ProfileAddressesSection() {
     setErrors({});
     setTouched({});
     setSubmitAttempted(false);
+    setRequestError(null);
     setModalOpen(true);
   }
 
@@ -187,10 +197,12 @@ export function ProfileAddressesSection() {
     setErrors({});
     setTouched({});
     setSubmitAttempted(false);
+    setRequestError(null);
   }
 
-  function handleSubmitAddress(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmitAddress(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setRequestError(null);
 
     const nextErrors = validateAddress(form);
     setSubmitAttempted(true);
@@ -206,8 +218,21 @@ export function ProfileAddressesSection() {
       return;
     }
 
-    addProfileAddress(form);
-    closeModal();
+    try {
+      await addAddress(form);
+      closeModal();
+    } catch (error) {
+      setRequestError(error instanceof Error ? error.message : "新增地址失敗，請稍後再試。");
+    }
+  }
+
+  async function handleRemoveAddress(addressId: string) {
+    try {
+      setRequestError(null);
+      await removeAddress(addressId);
+    } catch (error) {
+      setRequestError(error instanceof Error ? error.message : "刪除地址失敗，請稍後再試。");
+    }
   }
 
   return (
@@ -239,7 +264,8 @@ export function ProfileAddressesSection() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between pb-5 border-b border-zinc-300">
                   <div className="space-y-2 text-base text-zinc-800 ">
                     <p className="font-medium text-zinc-900">
-                      {address.recipientName}
+                      {address.recipientLastName}
+                      {address.recipientFirstName}
                       {address.isDefault ? <span className="ml-2 text-sm text-zinc-500">預設</span> : null}
                     </p>
                     <p>{address.phone}</p>
@@ -253,7 +279,9 @@ export function ProfileAddressesSection() {
 
                   <button
                     type="button"
-                    onClick={() => removeProfileAddress(address.id)}
+                    onClick={() => {
+                      void handleRemoveAddress(address.id);
+                    }}
                     className="inline-flex h-9 w-fit items-center rounded-full border border-zinc-300 px-4 text-base text-zinc-900"
                   >
                     刪除
@@ -263,6 +291,8 @@ export function ProfileAddressesSection() {
             ))}
           </div>
         ) : null}
+
+        {requestError ? <p className="text-sm text-red-600">{requestError}</p> : null}
       </section>
 
       {modalOpen ? (
@@ -276,14 +306,24 @@ export function ProfileAddressesSection() {
             <h3 className="text-lg font-semibold text-zinc-900">新增地址</h3>
 
             <form onSubmit={handleSubmitAddress} className="mt-4 space-y-4">
-              <ProfileFloatingInput
-                id="address-recipient"
-                label="收件人姓名*"
-                value={form.recipientName}
-                onChange={(value) => updateField("recipientName", value)}
-                onBlur={() => markTouched("recipientName")}
-                error={getError("recipientName")}
-              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <ProfileFloatingInput
+                  id="address-recipient-last-name"
+                  label="收件人姓氏*"
+                  value={form.recipientLastName}
+                  onChange={(value) => updateField("recipientLastName", value)}
+                  onBlur={() => markTouched("recipientLastName")}
+                  error={getError("recipientLastName")}
+                />
+                <ProfileFloatingInput
+                  id="address-recipient-first-name"
+                  label="收件人名字*"
+                  value={form.recipientFirstName}
+                  onChange={(value) => updateField("recipientFirstName", value)}
+                  onBlur={() => markTouched("recipientFirstName")}
+                  error={getError("recipientFirstName")}
+                />
+              </div>
               <ProfileFloatingInput
                 id="address-phone"
                 label="電話號碼*"
@@ -366,6 +406,8 @@ export function ProfileAddressesSection() {
                   儲存
                 </button>
               </div>
+
+              {requestError ? <p className="text-sm text-red-600">{requestError}</p> : null}
             </form>
           </div>
         </div>

@@ -168,6 +168,20 @@ export function getMockSession() {
   return parsed;
 }
 
+export function setMockSession(nextSession: MockAuthSession | null) {
+  if (!isBrowser()) {
+    return;
+  }
+
+  if (nextSession) {
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextSession));
+  } else {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+  }
+
+  emitAuthChanged();
+}
+
 export function signInMockUser(rawEmail: string) {
   const account = getMockAccountByEmail(rawEmail);
   if (!account || !isBrowser()) {
@@ -179,8 +193,7 @@ export function signInMockUser(rawEmail: string) {
     name: account.name,
   };
 
-  localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
-  emitAuthChanged();
+  setMockSession(session);
   return session;
 }
 
@@ -195,18 +208,12 @@ export function registerAndSignInMockUser(rawEmail: string) {
     name: account.name,
   };
 
-  localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
-  emitAuthChanged();
+  setMockSession(session);
   return session;
 }
 
 export function signOutMockUser() {
-  if (!isBrowser()) {
-    return;
-  }
-
-  localStorage.removeItem(SESSION_STORAGE_KEY);
-  emitAuthChanged();
+  setMockSession(null);
 }
 
 export function startMockEmailVerification(rawEmail: string) {

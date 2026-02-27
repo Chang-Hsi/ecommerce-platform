@@ -1,3 +1,10 @@
+import {
+  addCartItemToApi,
+  fetchCartItemsFromApi,
+  removeCartItemFromApi,
+  updateCartItemQtyFromApi,
+} from "@/lib/api/cart";
+import { getMockSession } from "@/lib/auth/mock-auth";
 import { defaultMockCartItems } from "@/content/cart";
 import type { CartSummary, MiniCartOpenPayload, MockCartItem } from "@/lib/cart/types";
 
@@ -51,6 +58,12 @@ function writeCartItems(items: MockCartItem[]) {
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
 }
 
+function replaceCartItems(items: MockCartItem[]) {
+  writeCartItems(items);
+  emitCartChanged();
+  return items;
+}
+
 function ensureCartItems() {
   if (!isBrowser()) {
     return defaultMockCartItems;
@@ -67,6 +80,24 @@ function ensureCartItems() {
 
 export function getCartItems() {
   return ensureCartItems();
+}
+
+export async function syncCartItemsFromApi() {
+  if (!isBrowser()) {
+    return defaultMockCartItems;
+  }
+
+  if (!getMockSession()) {
+    return replaceCartItems([]);
+  }
+
+  try {
+    const items = await fetchCartItemsFromApi();
+    return replaceCartItems(items);
+  } catch (error) {
+    console.error("[mock-cart] syncCartItemsFromApi failed", error);
+    return getCartItems();
+  }
 }
 
 export function getCartItemCount(items = getCartItems()) {
@@ -146,9 +177,20 @@ export function addCartItem(input: AddCartItemInput) {
     addedItemId = newItem.id;
   }
 
-  writeCartItems(nextItems);
-  emitCartChanged();
+  replaceCartItems(nextItems);
   emitMiniCartOpen({ itemId: addedItemId });
+
+  void addCartItemToApi({
+    slug: input.slug,
+    sizeLabel: input.sizeLabel,
+    qty: 1,
+  })
+    .then((items) => {
+      replaceCartItems(items);
+    })
+    .catch((error) => {
+      console.error("[mock-cart] addCartItemToApi failed", error);
+    });
 
   return {
     items: nextItems,
@@ -158,8 +200,16 @@ export function addCartItem(input: AddCartItemInput) {
 
 export function removeCartItem(itemId: string) {
   const nextItems = getCartItems().filter((item) => item.id !== itemId);
-  writeCartItems(nextItems);
-  emitCartChanged();
+  replaceCartItems(nextItems);
+
+  void removeCartItemFromApi(itemId)
+    .then((items) => {
+      replaceCartItems(items);
+    })
+    .catch((error) => {
+      console.error("[mock-cart] removeCartItemFromApi failed", error);
+    });
+
   return nextItems;
 }
 
@@ -174,8 +224,16 @@ export function updateCartItemQty(itemId: string, qty: number) {
       : item,
   );
 
-  writeCartItems(nextItems);
-  emitCartChanged();
+  replaceCartItems(nextItems);
+
+  void updateCartItemQtyFromApi(itemId, safeQty)
+    .then((items) => {
+      replaceCartItems(items);
+    })
+    .catch((error) => {
+      console.error("[mock-cart] updateCartItemQtyFromApi failed", error);
+    });
+
   return nextItems;
 }
 
@@ -198,8 +256,7 @@ export function toggleCartItemFavorite(itemId: string) {
       : item,
   );
 
-  writeCartItems(nextItems);
-  emitCartChanged();
+  replaceCartItems(nextItems);
   return nextItems;
 }
 

@@ -38,6 +38,8 @@ function createDefaultState(email?: string): ProfileState {
 
   return {
     account: {
+      firstName: "",
+      lastName: "",
       email: email ?? "",
       passwordMask: "••••••••••••••••",
       birthday: "1992-01-26",
@@ -56,6 +58,7 @@ function createDefaultState(email?: string): ProfileState {
     visibility: {
       displayName: "個人檔案顯示資訊",
       avatarText: "長西828228298",
+      avatarUrl: "",
       reviewVisibility: "community",
       locationSharing: "none",
     },
@@ -68,11 +71,16 @@ function createDefaultState(email?: string): ProfileState {
   };
 }
 
-function normalizeAddress(address: ProfileAddress): ProfileAddress {
+function normalizeAddress(address: ProfileAddress & { recipientName?: string }): ProfileAddress {
+  const legacyName = String(address.recipientName || "").trim();
+  const fallbackLastName = legacyName ? legacyName.slice(0, 1) : "";
+  const fallbackFirstName = legacyName.length > 1 ? legacyName.slice(1) : "";
+
   return {
     ...address,
     id: String(address.id || "").trim(),
-    recipientName: String(address.recipientName || "").trim(),
+    recipientLastName: String(address.recipientLastName || "").trim() || fallbackLastName,
+    recipientFirstName: String(address.recipientFirstName || "").trim() || fallbackFirstName,
     phone: String(address.phone || "").trim(),
     country: String(address.country || "").trim(),
     city: String(address.city || "").trim(),
@@ -87,6 +95,8 @@ function normalizeAddress(address: ProfileAddress): ProfileAddress {
 
 function normalizeAccount(next: Partial<ProfileAccountState>, fallback: ProfileAccountState): ProfileAccountState {
   return {
+    firstName: String(next.firstName ?? fallback.firstName ?? "").trim(),
+    lastName: String(next.lastName ?? fallback.lastName ?? "").trim(),
     email: String(next.email ?? fallback.email ?? "").trim(),
     passwordMask: String(next.passwordMask ?? fallback.passwordMask ?? "••••••••••••••••").trim(),
     birthday: String(next.birthday ?? fallback.birthday ?? "").trim(),
@@ -124,6 +134,7 @@ function normalizeVisibility(next: Partial<ProfileVisibilityState>, fallback: Pr
   return {
     displayName: String(next.displayName ?? fallback.displayName ?? "").trim(),
     avatarText: String(next.avatarText ?? fallback.avatarText ?? "").trim(),
+    avatarUrl: String(next.avatarUrl ?? fallback.avatarUrl ?? "").trim(),
     reviewVisibility:
       reviewVisibility === "private" || reviewVisibility === "public" ? reviewVisibility : "community",
     locationSharing: locationSharing === "friends" ? "friends" : "none",
@@ -144,7 +155,7 @@ function mergeWithDefaults(input: Partial<ProfileState>, defaults: ProfileState)
     addresses: Array.isArray(input.addresses)
       ? input.addresses
           .map((address) => normalizeAddress(address))
-          .filter((address) => Boolean(address.id && address.recipientName))
+          .filter((address) => Boolean(address.id && address.recipientLastName && address.recipientFirstName))
       : defaults.addresses,
     preferences: normalizePreferences(input.preferences ?? {}, defaults.preferences),
     visibility: normalizeVisibility(input.visibility ?? {}, defaults.visibility),
@@ -265,7 +276,8 @@ export function addProfileAddress(input: ProfileAddressInput) {
   return updateProfileState((current) => {
     const nextAddress: ProfileAddress = {
       id: nextAddressId(),
-      recipientName: input.recipientName.trim(),
+      recipientLastName: input.recipientLastName.trim(),
+      recipientFirstName: input.recipientFirstName.trim(),
       phone: input.phone.trim(),
       country: input.country.trim(),
       city: input.city.trim(),

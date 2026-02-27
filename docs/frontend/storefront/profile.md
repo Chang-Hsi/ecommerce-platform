@@ -181,6 +181,8 @@
 
 `ProfileAccount`
 - `userId`
+- `firstName`
+- `lastName`
 - `email`
 - `birthday`
 - `country`
@@ -192,7 +194,8 @@
 `ProfileAddress`
 - `id`
 - `userId`
-- `recipientName`
+- `recipientLastName`
+- `recipientFirstName`
 - `phone`
 - `country`
 - `city`
@@ -342,4 +345,3 @@
 ### 💡 我的建議
 
 如果你正在從零開始，最簡單且最保險的方法是採用 **Google Places API** 作為輸入前端，並參考 **ISO 3166** 標準來設計你的國家選單。
-

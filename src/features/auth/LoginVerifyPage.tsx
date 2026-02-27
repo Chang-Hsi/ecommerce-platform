@@ -2,56 +2,67 @@
 
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { requestLoginCodeFromApi, verifyLoginCodeFromApi } from "@/lib/api/auth";
 import {
-  getMockEmailVerification,
-  registerAndSignInMockUser,
-  resendMockEmailVerification,
   resolveSafeRedirect,
-  verifyMockEmailCode,
+  setMockSession,
 } from "@/lib/auth/mock-auth";
 
-type LoginVerifyPageProps = {
-  searchParams: Record<string, string | string[] | undefined>;
-};
-
-function readSingleQueryValue(value: string | string[] | undefined) {
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (Array.isArray(value) && value.length > 0) {
-    return value[0] ?? "";
-  }
-
-  return "";
+function readSingleQueryValue(value: string | null) {
+  return value?.trim() ?? "";
 }
 
-export function LoginVerifyPage({ searchParams }: Readonly<LoginVerifyPageProps>) {
+export function LoginVerifyPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [code, setCode] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [resendCountdown, setResendCountdown] = useState(24);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const initialDebugCode = useMemo(() => readSingleQueryValue(searchParams.get("debugCode")), [searchParams]);
+  const [debugCode, setDebugCode] = useState<string | null>(initialDebugCode || null);
 
-  const email = useMemo(() => readSingleQueryValue(searchParams.email).trim().toLowerCase(), [searchParams.email]);
+  const email = useMemo(() => readSingleQueryValue(searchParams.get("email")).toLowerCase(), [searchParams]);
 
   const redirectTarget = useMemo(() => {
-    const redirect = readSingleQueryValue(searchParams.redirect);
+    const redirect = readSingleQueryValue(searchParams.get("redirect"));
     return resolveSafeRedirect(redirect);
-  }, [searchParams.redirect]);
-
-  const currentVerification = email ? getMockEmailVerification(email) : null;
+  }, [searchParams]);
 
   useEffect(() => {
+    let isMounted = true;
+
     if (!email) {
       router.replace(`/login?redirect=${encodeURIComponent(redirectTarget)}`);
       return;
     }
 
-    if (!getMockEmailVerification(email)) {
-      resendMockEmailVerification(email);
+    if (initialDebugCode) {
+      return;
     }
-  }, [email, redirectTarget, router]);
+
+    async function bootstrapVerificationCode() {
+      try {
+        const payload = await requestLoginCodeFromApi(email);
+        if (!isMounted) {
+          return;
+        }
+        setDebugCode(payload.debugCode ?? null);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+        setDebugCode(null);
+      }
+    }
+
+    void bootstrapVerificationCode();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [email, initialDebugCode, redirectTarget, router]);
 
   useEffect(() => {
     if (resendCountdown <= 0) {
@@ -67,17 +78,22 @@ export function LoginVerifyPage({ searchParams }: Readonly<LoginVerifyPageProps>
     };
   }, [resendCountdown]);
 
-  function handleResend() {
+  async function handleResend() {
     if (!email) {
       return;
     }
 
-    resendMockEmailVerification(email);
-    setResendCountdown(24);
-    setErrorMessage(null);
+    try {
+      const payload = await requestLoginCodeFromApi(email);
+      setResendCountdown(24);
+      setErrorMessage(null);
+      setDebugCode(payload.debugCode ?? null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "目前無法重寄驗證碼，請稍後再試。");
+    }
   }
 
-  function handleVerify(event: React.FormEvent<HTMLFormElement>) {
+  async function handleVerify(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErrorMessage(null);
 
@@ -86,13 +102,19 @@ export function LoginVerifyPage({ searchParams }: Readonly<LoginVerifyPageProps>
       return;
     }
 
-    if (!verifyMockEmailCode(email, code)) {
-      setErrorMessage("驗證碼錯誤或已逾時，請重新輸入或重寄。\n（測試可用 12345678）");
-      return;
-    }
+    setIsSubmitting(true);
 
-    registerAndSignInMockUser(email);
-    router.replace(redirectTarget);
+    try {
+      const nextSession = await verifyLoginCodeFromApi(email, code);
+      setMockSession({
+        email: nextSession.email,
+        name: nextSession.name,
+      });
+      router.replace(redirectTarget);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "驗證失敗，請重新輸入。");
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -137,13 +159,13 @@ export function LoginVerifyPage({ searchParams }: Readonly<LoginVerifyPageProps>
           {resendCountdown > 0 ? `${resendCountdown} 秒後重新傳送驗證碼` : "可重新傳送驗證碼"}
         </p>
 
-        {currentVerification ? <p className="text-sm text-zinc-500">Demo 驗證碼：{currentVerification.code}</p> : null}
+        {debugCode ? <p className="text-sm text-zinc-500">Demo 驗證碼：{debugCode}</p> : null}
         {errorMessage ? <p className="whitespace-pre-line text-sm text-red-600">{errorMessage}</p> : null}
 
         <button
           type="submit"
           className="h-14 w-full rounded-full bg-black text-base font-semibold text-white disabled:opacity-60"
-          disabled={code.length !== 8}
+          disabled={code.length !== 8 || isSubmitting}
         >
           登入
         </button>

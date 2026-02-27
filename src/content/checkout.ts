@@ -21,7 +21,7 @@ export const checkoutContent = {
     { value: "gpay", label: "Google Pay" },
   ] as Array<{ value: CheckoutPaymentMethod; label: string }>,
   placeOrderDisclaimer:
-    "點選「下訂單」即代表你同意服務條款與隱私政策。M3 階段為 mock 流程，不會進行真實扣款。",
+    "點選「下訂單」即代表你同意服務條款與隱私政策。M5 會建立訂單並進入待付款狀態，實際 Stripe 扣款於 M7 串接。",
   placeOrderButtonLabel: "下訂單",
   orderSummaryTitle: "訂單摘要",
   freeShippingQualifiedLabel: "你已符合免運費資格！",

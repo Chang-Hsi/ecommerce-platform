@@ -7,9 +7,14 @@ import { checkoutContent } from "@/content/checkout";
 type CheckoutOrderSummaryProps = {
   summary: CheckoutSummary;
   items: CheckoutOrderItem[];
+  deliveryWindowLabel?: string;
 };
 
-export function CheckoutOrderSummary({ summary, items }: Readonly<CheckoutOrderSummaryProps>) {
+export function CheckoutOrderSummary({
+  summary,
+  items,
+  deliveryWindowLabel,
+}: Readonly<CheckoutOrderSummaryProps>) {
   return (
     <aside className="space-y-6 border border-zinc-300 bg-zinc-100 p-6">
       <h2 className="text-4xl font-semibold text-zinc-900 sm:text-3xl">{checkoutContent.orderSummaryTitle}</h2>
@@ -56,7 +61,7 @@ export function CheckoutOrderSummary({ summary, items }: Readonly<CheckoutOrderS
 
       <div className="space-y-5 border-t border-zinc-300 pt-5">
         <h3 className="text-3xl font-semibold leading-snug text-zinc-900 sm:text-2xl">
-          {checkoutContent.orderDeliveryWindowTitle}
+          {deliveryWindowLabel || checkoutContent.orderDeliveryWindowTitle}
         </h3>
 
         <div className="space-y-5">

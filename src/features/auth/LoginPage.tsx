@@ -1,42 +1,25 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { requestLoginCodeFromApi } from "@/lib/api/auth";
 import {
-  hasMockAccount,
   isValidEmail,
   normalizeEmail,
   resolveSafeRedirect,
-  signInMockUser,
-  startMockEmailVerification,
 } from "@/lib/auth/mock-auth";
 
-type LoginPageProps = {
-  searchParams: Record<string, string | string[] | undefined>;
-};
-
-function readSingleQueryValue(value: string | string[] | undefined) {
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (Array.isArray(value) && value.length > 0) {
-    return value[0] ?? "";
-  }
-
-  return "";
-}
-
-export function LoginPage({ searchParams }: Readonly<LoginPageProps>) {
+export function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const redirectTarget = useMemo(() => {
-    const redirect = readSingleQueryValue(searchParams.redirect);
+    const redirect = searchParams.get("redirect") ?? "";
     return resolveSafeRedirect(redirect);
-  }, [searchParams.redirect]);
+  }, [searchParams]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -49,16 +32,22 @@ export function LoginPage({ searchParams }: Readonly<LoginPageProps>) {
     }
 
     setIsSubmitting(true);
+    try {
+      const verification = await requestLoginCodeFromApi(normalized);
+      const params = new URLSearchParams({
+        email: normalized,
+        redirect: redirectTarget,
+      });
 
-    if (hasMockAccount(normalized)) {
-      signInMockUser(normalized);
-      router.replace(redirectTarget);
-      return;
+      if (verification.debugCode) {
+        params.set("debugCode", verification.debugCode);
+      }
+
+      router.push(`/login/verify?${params.toString()}`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "目前無法發送驗證碼，請稍後再試。");
+      setIsSubmitting(false);
     }
-
-    startMockEmailVerification(normalized);
-    const verifyHref = `/login/verify?email=${encodeURIComponent(normalized)}&redirect=${encodeURIComponent(redirectTarget)}`;
-    router.push(verifyHref);
   }
 
   return (

@@ -171,3 +171,17 @@
 1. M4：補齊 order / payment intent / shipping address 資料模型。
 2. M5：串接 checkout validate / apply promo / create order API。
 3. M7：串接 Stripe test mode + webhook 狀態閉環。
+
+---
+
+## 11. M5 串接狀態（2026-02-27）
+
+- `/checkout` 已從 mock cart 改為 API 驅動。
+- 已串接 API：
+  - `GET /api/checkout`：初始化資料（form/items/summary/appliedPromo）
+  - `POST /api/checkout/promo`：套用/清除促銷碼
+  - `POST /api/checkout/place-order`：建立訂單並回傳 `redirectUrl`
+- 前端仍保留表單前置驗證（即時錯誤提示），後端做最終驗證。
+- 金流邊界：
+  - M5：建立訂單與付款待處理狀態
+  - M7：串接 Stripe test mode（`clientSecret` / webhook）
