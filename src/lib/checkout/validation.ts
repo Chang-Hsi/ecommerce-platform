@@ -7,11 +7,8 @@ import type {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_PATTERN = /^\+?\d[\d\s-]{7,14}$/;
-const CARD_NUMBER_PATTERN = /^\d{13,19}$/;
-const CARD_EXPIRY_PATTERN = /^(0[1-9]|1[0-2])\/\d{2}$/;
-const CARD_CVC_PATTERN = /^\d{3,4}$/;
 const NAME_PATTERN = /^[A-Za-z\u4E00-\u9FFF][A-Za-z\u4E00-\u9FFF\s'’-]{0,29}$/;
-const CARD_HOLDER_PATTERN = /^[A-Za-z\s'’-]{2,40}$/;
+const CARD_HOLDER_PATTERN = /^[A-Za-z\u4E00-\u9FFF\s'’-]{2,40}$/;
 const PO_BOX_PATTERN = /(郵政信箱|p\.?\s*o\.?\s*box|post office box)/i;
 
 export function normalizePromoCode(rawCode: string) {
@@ -89,42 +86,7 @@ export function validateCheckoutForm(
     } else if (!CARD_HOLDER_PATTERN.test(form.cardName.trim())) {
       errors.cardName = "你輸入的字元無效。";
     }
-
-    if (!CARD_NUMBER_PATTERN.test(form.cardNumber.replace(/\s+/g, ""))) {
-      errors.cardNumber = "請輸入有效卡號";
-    }
-
-    if (!CARD_EXPIRY_PATTERN.test(form.cardExpiry.trim())) {
-      errors.cardExpiry = "格式為 MM/YY";
-    } else if (isExpiredCardDate(form.cardExpiry.trim())) {
-      errors.cardExpiry = "卡片已過期";
-    }
-
-    if (!CARD_CVC_PATTERN.test(form.cardCvc.trim())) {
-      errors.cardCvc = "請輸入有效安全碼";
-    }
   }
 
   return errors;
-}
-
-function isExpiredCardDate(expiry: string) {
-  const [monthValue, yearValue] = expiry.split("/");
-  const month = Number(monthValue);
-  const year = Number(yearValue);
-  if (!month || Number.isNaN(year)) {
-    return false;
-  }
-
-  const now = new Date();
-  const currentYear = now.getFullYear() % 100;
-  const currentMonth = now.getMonth() + 1;
-
-  if (year < currentYear) {
-    return true;
-  }
-  if (year === currentYear && month < currentMonth) {
-    return true;
-  }
-  return false;
 }

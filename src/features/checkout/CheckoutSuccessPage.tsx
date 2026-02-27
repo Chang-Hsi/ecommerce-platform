@@ -7,7 +7,7 @@ export function CheckoutSuccessPage() {
         <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Order Confirmed</p>
         <h1 className="text-4xl font-semibold text-zinc-900 sm:text-3xl">訂單已建立</h1>
         <p className="text-base text-zinc-600">
-          你的訂單已成功送出。付款流程會在 M7 串接 Stripe 測試金流，現階段僅建立訂單與付款待處理狀態。
+          你的訂單已成功送出。若你使用信用卡，付款完成後系統會透過 Stripe webhook 自動更新訂單狀態。
         </p>
       </div>
 

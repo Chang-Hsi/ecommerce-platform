@@ -1,10 +1,16 @@
 "use client";
 
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import { CheckoutOrderSummary } from "@/components/checkout/CheckoutOrderSummary";
 import { CheckoutPaymentSection } from "@/components/checkout/CheckoutPaymentSection";
 import { CheckoutShippingContactSection } from "@/components/checkout/CheckoutShippingContactSection";
 import { CheckoutShippingInfoSection } from "@/components/checkout/CheckoutShippingInfoSection";
 import { useCheckoutController } from "@/hooks/checkout/useCheckoutController";
+
+const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  : null;
 
 export function CheckoutPage() {
   const {
@@ -70,24 +76,47 @@ export function CheckoutPage() {
             onTouchField={touchField}
           />
           <CheckoutShippingInfoSection deliveryWindowLabel={deliveryWindowLabel} />
-          <CheckoutPaymentSection
-            form={form}
-            errors={errors}
-            paymentMethod={paymentMethod}
-            promoInput={promoInput}
-            appliedPromo={appliedPromo}
-            promoMessage={promoMessage}
-            submitError={submitError}
-            isApplyingPromo={isApplyingPromo}
-            isPlacingOrder={isPlacingOrder}
-            isPlaceOrderDisabled={isPlaceOrderDisabled}
-            onUpdateField={updateField}
-            onTouchField={touchField}
-            onSetPaymentMethod={setPaymentMethod}
-            onSetPromoInput={setPromoInput}
-            onApplyPromo={onApplyPromo}
-            onPlaceOrder={onPlaceOrder}
-          />
+          {stripePromise ? (
+            <Elements stripe={stripePromise}>
+              <CheckoutPaymentSection
+                form={form}
+                errors={errors}
+                paymentMethod={paymentMethod}
+                promoInput={promoInput}
+                appliedPromo={appliedPromo}
+                promoMessage={promoMessage}
+                submitError={submitError}
+                isApplyingPromo={isApplyingPromo}
+                isPlacingOrder={isPlacingOrder}
+                isPlaceOrderDisabled={isPlaceOrderDisabled}
+                onUpdateField={updateField}
+                onTouchField={touchField}
+                onSetPaymentMethod={setPaymentMethod}
+                onSetPromoInput={setPromoInput}
+                onApplyPromo={onApplyPromo}
+                onPlaceOrder={onPlaceOrder}
+              />
+            </Elements>
+          ) : (
+            <CheckoutPaymentSection
+              form={form}
+              errors={errors}
+              paymentMethod={paymentMethod}
+              promoInput={promoInput}
+              appliedPromo={appliedPromo}
+              promoMessage={promoMessage}
+              submitError={submitError}
+              isApplyingPromo={isApplyingPromo}
+              isPlacingOrder={isPlacingOrder}
+              isPlaceOrderDisabled={isPlaceOrderDisabled}
+              onUpdateField={updateField}
+              onTouchField={touchField}
+              onSetPaymentMethod={setPaymentMethod}
+              onSetPromoInput={setPromoInput}
+              onApplyPromo={onApplyPromo}
+              onPlaceOrder={onPlaceOrder}
+            />
+          )}
         </div>
       </div>
     </div>

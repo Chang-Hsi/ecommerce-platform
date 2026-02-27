@@ -5,6 +5,7 @@ import {
   PaymentStatus,
   type Prisma,
 } from "@prisma/client";
+import { randomUUID } from "node:crypto";
 import { buildCheckoutSummary } from "@/lib/checkout/pricing";
 import type {
   CheckoutFormState,
@@ -14,7 +15,12 @@ import type {
   CheckoutSummary,
 } from "@/lib/checkout/types";
 import { prisma } from "@/lib/prisma";
+import {
+  createStripeCheckoutSessionForOrder,
+  createStripePaymentIntentForOrder,
+} from "@/lib/server/payments-stripe";
 import { getOrCreateActiveCart } from "@/lib/server/cart-favorites";
+import { buildStripeCancelUrl, buildStripeSuccessUrl, isStripeConfigured } from "@/lib/server/stripe";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DEFAULT_DELIVERY_WINDOW_LABEL = "在 3月4日 週三至 3月9日 週一之間送達";
@@ -42,10 +48,6 @@ function decimalToNumber(value: Prisma.Decimal | null | undefined) {
 }
 
 function mapPaymentMethod(value: CheckoutPaymentMethod) {
-  if (value === "paypal") {
-    return PaymentMethod.PAYPAL;
-  }
-
   if (value === "gpay") {
     return PaymentMethod.GPAY;
   }
@@ -363,10 +365,41 @@ export async function placeOrderByUserId(input: PlaceOrderInput) {
 
   const summary = buildCheckoutSummary(context.items, promoDiscount);
   const mappedPaymentMethod = mapPaymentMethod(input.paymentMethod);
+  const orderId = randomUUID();
+
+  let stripeSession: { sessionId: string; checkoutUrl: string } | null = null;
+  let stripePaymentIntent: { paymentIntentId: string; clientSecret: string } | null = null;
+
+  if (mappedPaymentMethod === PaymentMethod.CARD) {
+    if (!isStripeConfigured()) {
+      throw new Error("Stripe 尚未設定完成，請先配置測試金流環境變數。");
+    }
+
+    if (input.paymentMethod === "card") {
+      stripePaymentIntent = await createStripePaymentIntentForOrder({
+        orderId,
+        userId: input.userId,
+        email: input.form.email.trim().toLowerCase(),
+        amount: summary.total,
+        currency: "TWD",
+      });
+    } else {
+      stripeSession = await createStripeCheckoutSessionForOrder({
+        orderId,
+        userId: input.userId,
+        email: input.form.email.trim().toLowerCase(),
+        currency: "TWD",
+        items: context.items,
+        successUrl: buildStripeSuccessUrl(orderId),
+        cancelUrl: buildStripeCancelUrl(orderId),
+      });
+    }
+  }
 
   const createdOrder = await prisma.$transaction(async (tx) => {
     const order = await tx.order.create({
       data: {
+        id: orderId,
         userId: input.userId,
         cartId: context.cart.id,
         promoCodeId: activePromoCode?.id ?? null,
@@ -411,6 +444,7 @@ export async function placeOrderByUserId(input: PlaceOrderInput) {
             status: PaymentStatus.PENDING,
             amount: summary.total,
             currency: "TWD",
+            providerRef: stripeSession?.sessionId ?? stripePaymentIntent?.paymentIntentId ?? null,
           },
         },
       },
@@ -470,11 +504,21 @@ export async function placeOrderByUserId(input: PlaceOrderInput) {
       total: Number(createdOrder.total),
       currency: createdOrder.currency,
     },
-    redirectUrl: `/checkout/success?orderId=${encodeURIComponent(createdOrder.id)}`,
+    redirectUrl:
+      mappedPaymentMethod === PaymentMethod.CARD && stripeSession
+        ? stripeSession.checkoutUrl
+        : mappedPaymentMethod === PaymentMethod.CARD && stripePaymentIntent
+          ? ""
+          : `/checkout/success?orderId=${encodeURIComponent(createdOrder.id)}`,
     paymentPreparation: {
       provider: "stripe",
-      mode: "M7_PENDING",
-      clientSecret: null as string | null,
+      mode:
+        mappedPaymentMethod === PaymentMethod.CARD && stripePaymentIntent
+          ? "STRIPE_EMBEDDED"
+          : mappedPaymentMethod === PaymentMethod.CARD && stripeSession
+            ? "STRIPE_CHECKOUT"
+            : "M7_PENDING",
+      clientSecret: stripePaymentIntent?.clientSecret ?? null,
     },
   };
 }

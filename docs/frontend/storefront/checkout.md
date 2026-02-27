@@ -174,14 +174,30 @@
 
 ---
 
-## 11. M5 串接狀態（2026-02-27）
+## 11. M7 串接狀態（2026-02-27）
 
-- `/checkout` 已從 mock cart 改為 API 驅動。
+- `/checkout` 已為 API + Stripe 雙模式付款流程。
 - 已串接 API：
   - `GET /api/checkout`：初始化資料（form/items/summary/appliedPromo）
   - `POST /api/checkout/promo`：套用/清除促銷碼
-  - `POST /api/checkout/place-order`：建立訂單並回傳 `redirectUrl`
-- 前端仍保留表單前置驗證（即時錯誤提示），後端做最終驗證。
-- 金流邊界：
-  - M5：建立訂單與付款待處理狀態
-  - M7：串接 Stripe test mode（`clientSecret` / webhook）
+  - `POST /api/checkout/place-order`：建立訂單並回傳付款前置資料
+  - `POST /api/payments/stripe/webhook`：付款事件回寫
+- 前端表單仍有前置驗證（寄送資訊/帳單資訊/持卡人姓名），後端做最終驗證。
+
+### 11.1 付款方式與對應後端策略
+
+1. `信用卡或金融簽帳卡`（`paymentMethod=card`）
+   - 前端：站內顯示卡號輸入（Stripe Elements）
+   - 後端：建立 `PaymentIntent`，回傳 `clientSecret`（`STRIPE_EMBEDDED`）
+   - 前端：呼叫 `confirmCardPayment` 完成付款，不跳轉 Stripe 頁
+2. `Stripe`（沿用 `paymentMethod=paypal` key，前台文案改為 Stripe）
+   - 前端：點下訂單後導轉 Stripe Hosted Checkout
+   - 後端：建立 `Checkout Session`，回傳 `redirectUrl`（`STRIPE_CHECKOUT`）
+3. `Google Pay`（`paymentMethod=gpay`）
+   - M7 為 UI 預留（`M7_PENDING`），尚未串接實際金流
+
+### 11.2 M7 注意事項
+
+- `stripe listen` 請避免重複啟動多個進程（避免同事件重複轉發）。
+- 若 webhook secret 變動，需同步更新 `.env.local` 的 `STRIPE_WEBHOOK_SECRET`。
+- 付款成功/失敗以 webhook 回寫狀態為最終一致來源。

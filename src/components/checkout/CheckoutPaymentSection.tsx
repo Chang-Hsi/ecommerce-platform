@@ -1,4 +1,19 @@
 import { CreditCardIcon, LockClosedIcon } from "@heroicons/react/24/outline";
+import {
+  CardCvcElement,
+  CardExpiryElement,
+  CardNumberElement,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
+import type {
+  Stripe,
+  StripeCardCvcElementChangeEvent,
+  StripeCardExpiryElementChangeEvent,
+  StripeCardNumberElementChangeEvent,
+  StripeElements,
+} from "@stripe/stripe-js";
+import { useState } from "react";
 import type {
   CheckoutFormErrors,
   CheckoutFormState,
@@ -23,7 +38,7 @@ type CheckoutPaymentSectionProps = {
   onSetPaymentMethod: (method: CheckoutPaymentMethod) => void;
   onSetPromoInput: (value: string) => void;
   onApplyPromo: () => void;
-  onPlaceOrder: () => void;
+  onPlaceOrder: (input?: { stripe: Stripe | null; elements: StripeElements | null }) => Promise<void>;
 };
 
 function PaymentMethodButton({
@@ -47,6 +62,21 @@ function PaymentMethodButton({
   );
 }
 
+const stripeElementOptions = {
+  style: {
+    base: {
+      fontSize: "16px",
+      color: "#18181b",
+      "::placeholder": {
+        color: "#a1a1aa",
+      },
+    },
+    invalid: {
+      color: "#dc2626",
+    },
+  },
+};
+
 export function CheckoutPaymentSection({
   form,
   errors,
@@ -65,6 +95,63 @@ export function CheckoutPaymentSection({
   onApplyPromo,
   onPlaceOrder,
 }: Readonly<CheckoutPaymentSectionProps>) {
+  const stripe = useStripe();
+  const elements = useElements();
+
+  const [cardNumberError, setCardNumberError] = useState<string | null>(null);
+  const [cardExpiryError, setCardExpiryError] = useState<string | null>(null);
+  const [cardCvcError, setCardCvcError] = useState<string | null>(null);
+  const [cardNumberComplete, setCardNumberComplete] = useState(false);
+  const [cardExpiryComplete, setCardExpiryComplete] = useState(false);
+  const [cardCvcComplete, setCardCvcComplete] = useState(false);
+  const [cardFormError, setCardFormError] = useState<string | null>(null);
+
+  const isCardPayment = paymentMethod === "card";
+
+  async function handlePlaceOrder() {
+    if (!isCardPayment) {
+      await onPlaceOrder();
+      return;
+    }
+
+    if (!stripe || !elements) {
+      setCardFormError("付款元件載入中，請稍後再試。");
+      return;
+    }
+
+    if (!cardNumberComplete || !cardExpiryComplete || !cardCvcComplete) {
+      setCardFormError("請完整填寫卡號、有效期限與安全碼。");
+      return;
+    }
+
+    setCardFormError(null);
+    await onPlaceOrder({ stripe, elements });
+  }
+
+  function onCardNumberChange(event: StripeCardNumberElementChangeEvent) {
+    setCardNumberComplete(event.complete);
+    setCardNumberError(event.error?.message ?? null);
+    if (cardFormError) {
+      setCardFormError(null);
+    }
+  }
+
+  function onCardExpiryChange(event: StripeCardExpiryElementChangeEvent) {
+    setCardExpiryComplete(event.complete);
+    setCardExpiryError(event.error?.message ?? null);
+    if (cardFormError) {
+      setCardFormError(null);
+    }
+  }
+
+  function onCardCvcChange(event: StripeCardCvcElementChangeEvent) {
+    setCardCvcComplete(event.complete);
+    setCardCvcError(event.error?.message ?? null);
+    if (cardFormError) {
+      setCardFormError(null);
+    }
+  }
+
   return (
     <section className="space-y-6 border-t border-zinc-200 pt-8">
       <h2 className="text-4xl font-semibold text-zinc-900 sm:text-3xl">{checkoutContent.paymentTitle}</h2>
@@ -97,7 +184,10 @@ export function CheckoutPaymentSection({
         <PaymentMethodButton
           selected={paymentMethod === "card"}
           label="信用卡或金融簽帳卡"
-          onClick={() => onSetPaymentMethod("card")}
+          onClick={() => {
+            setCardFormError(null);
+            onSetPaymentMethod("card");
+          }}
         >
           <span className="inline-flex items-center gap-2">
             <CreditCardIcon className="h-5 w-5" aria-hidden />
@@ -107,22 +197,28 @@ export function CheckoutPaymentSection({
 
         <PaymentMethodButton
           selected={paymentMethod === "paypal"}
-          label="PayPal"
-          onClick={() => onSetPaymentMethod("paypal")}
+          label="Stripe"
+          onClick={() => {
+            setCardFormError(null);
+            onSetPaymentMethod("paypal");
+          }}
         >
-          <span className="text-2xl font-bold text-[#003087] sm:text-xl">PayPal</span>
+          <span className="text-2xl font-bold text-[#635BFF] sm:text-xl">Stripe</span>
         </PaymentMethodButton>
 
         <PaymentMethodButton
           selected={paymentMethod === "gpay"}
           label="Google Pay"
-          onClick={() => onSetPaymentMethod("gpay")}
+          onClick={() => {
+            setCardFormError(null);
+            onSetPaymentMethod("gpay");
+          }}
         >
           <span className="text-2xl font-semibold text-zinc-800 sm:text-xl">Google Pay</span>
         </PaymentMethodButton>
       </section>
 
-      {paymentMethod === "card" ? (
+      {isCardPayment ? (
         <section className="space-y-4">
           <h3 className="text-2xl font-semibold text-zinc-900 sm:text-xl">請輸入你的詳細付款資訊：</h3>
 
@@ -140,55 +236,52 @@ export function CheckoutPaymentSection({
 
           <label className="block space-y-1">
             <span className="text-sm font-medium text-zinc-700">卡號 *</span>
-            <div className={`flex h-14 items-center gap-2 rounded border px-4 ${errors.cardNumber ? "border-red-500" : "border-zinc-300"}`}>
-              <input
-                value={form.cardNumber}
-                onChange={(event) => onUpdateField("cardNumber", event.target.value)}
-                onBlur={() => onTouchField("cardNumber")}
-                placeholder="卡號"
-                className="h-full w-full border-0 bg-transparent text-base outline-none"
-              />
+            <div className={`flex h-14 items-center gap-2 rounded border px-4 ${cardNumberError ? "border-red-500" : "border-zinc-300"}`}>
+              <div className="w-full">
+                <CardNumberElement options={stripeElementOptions} onChange={onCardNumberChange} />
+              </div>
               <LockClosedIcon className="h-5 w-5 text-zinc-500" aria-hidden />
             </div>
-            {errors.cardNumber ? <p className="text-sm text-red-600">{errors.cardNumber}</p> : null}
+            {cardNumberError ? <p className="text-sm text-red-600">{cardNumberError}</p> : null}
           </label>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block space-y-1">
               <span className="text-sm font-medium text-zinc-700">月份/年份 *</span>
-              <input
-                value={form.cardExpiry}
-                onChange={(event) => onUpdateField("cardExpiry", event.target.value)}
-                onBlur={() => onTouchField("cardExpiry")}
-                placeholder="MM/YY"
-                className={`h-14 w-full rounded border px-4 text-base outline-none ${errors.cardExpiry ? "border-red-500" : "border-zinc-300"}`}
-              />
-              {errors.cardExpiry ? <p className="text-sm text-red-600">{errors.cardExpiry}</p> : null}
+              <div className={`flex h-14 items-center rounded border px-4 ${cardExpiryError ? "border-red-500" : "border-zinc-300"}`}>
+                <div className="w-full">
+                  <CardExpiryElement options={stripeElementOptions} onChange={onCardExpiryChange} />
+                </div>
+              </div>
+              {cardExpiryError ? <p className="text-sm text-red-600">{cardExpiryError}</p> : null}
             </label>
 
             <label className="block space-y-1">
               <span className="text-sm font-medium text-zinc-700">安全碼 *</span>
-              <input
-                value={form.cardCvc}
-                onChange={(event) => onUpdateField("cardCvc", event.target.value)}
-                onBlur={() => onTouchField("cardCvc")}
-                placeholder="安全碼"
-                className={`h-14 w-full rounded border px-4 text-base outline-none ${errors.cardCvc ? "border-red-500" : "border-zinc-300"}`}
-              />
-              {errors.cardCvc ? <p className="text-sm text-red-600">{errors.cardCvc}</p> : null}
+              <div className={`flex h-14 items-center rounded border px-4 ${cardCvcError ? "border-red-500" : "border-zinc-300"}`}>
+                <div className="w-full">
+                  <CardCvcElement options={stripeElementOptions} onChange={onCardCvcChange} />
+                </div>
+              </div>
+              {cardCvcError ? <p className="text-sm text-red-600">{cardCvcError}</p> : null}
             </label>
           </div>
         </section>
+      ) : paymentMethod === "paypal" ? (
+        <section className="rounded-2xl border border-zinc-300 bg-zinc-50 p-4">
+          <p className="text-base font-semibold text-zinc-900">你將在下一步前往 Stripe 測試結帳頁完成付款。</p>
+        </section>
       ) : (
-        <p className="text-base text-zinc-600">M5 階段僅提供付款方式選擇 UI，實際金流於 M7 串接。</p>
+        <p className="text-base text-zinc-600">Google Pay 目前仍為 UI 預留，尚未啟用實際金流。</p>
       )}
 
       <section className="space-y-4 border-t border-zinc-200 pt-6">
         <p className="text-sm leading-6 text-zinc-500">{checkoutContent.placeOrderDisclaimer}</p>
+        {cardFormError ? <p className="text-sm text-red-600">{cardFormError}</p> : null}
         {submitError ? <p className="text-sm text-red-600">{submitError}</p> : null}
         <button
           type="button"
-          onClick={onPlaceOrder}
+          onClick={handlePlaceOrder}
           disabled={isPlaceOrderDisabled}
           className="h-16 w-full rounded-full bg-zinc-900 text-2xl font-semibold text-white disabled:bg-zinc-300 sm:text-xl"
         >

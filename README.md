@@ -1,6 +1,6 @@
 # Ecommerce Platform Demo
 
-Nike 風格電商 Demo 的 Next.js 全棧專案（M4 已完成；M5 API 落地與前台串接進行中，Batch 2 已完成）。
+Nike 風格電商 Demo 的 Next.js 全棧專案（M7 已完成；目前準備進入 M8 後台管理站）。
 
 ## Tech Stack
 
@@ -12,7 +12,7 @@ Nike 風格電商 Demo 的 Next.js 全棧專案（M4 已完成；M5 API 落地�
 
 ## Current Scope (Post-M3)
 
-- Storefront 路由：`/`、`/products`、`/products/[slug]`、`/favorites`、`/cart`、`/checkout`、`/checkout/success`
+- Storefront 路由：`/`、`/products`、`/products/[slug]`、`/favorites`、`/cart`、`/orders`、`/checkout`、`/checkout/success`
 - 協助路由：`/help`、`/help/topics/[slug]`、`/help/contact`
 - Profile 路由：`/profile/account`、`/profile/addresses`、`/profile/preferences`、`/profile/visibility`、`/profile/privacy`
 - SNKRS 路由：`/snkrs`
@@ -20,7 +20,7 @@ Nike 風格電商 Demo 的 Next.js 全棧專案（M4 已完成；M5 API 落地�
 - Storefront AppLayout（sticky header + Footer）
 - AuthLayout（登入/驗證頁專用，不含 storefront Header/Footer）
 - Admin 路由：`/admin`
-- API 路由（已落地）：`/api/health`、`/api/home`、`/api/help`、`/api/snkrs`、`/api/products*`、`/api/auth*`、`/api/cart*`、`/api/favorites*`、`/api/profile*`、`/api/checkout*`
+- API 路由（已落地）：`/api/health`、`/api/home`、`/api/help`、`/api/snkrs`、`/api/products*`、`/api/auth*`、`/api/cart*`、`/api/favorites*`、`/api/profile*`、`/api/orders`、`/api/checkout*`、`/api/payments/stripe/webhook`
 - Prisma 基礎 schema 與 client 初始化
 - 前台 IA 文件與 products 外頁（PLP）靜態落地
 - 前台分層策略已定案（`content / features / components / hooks / lib`）
@@ -183,13 +183,53 @@ SMTP_FROM="SwooshLab <your@gmail.com>"
   - `POST /api/profile/avatar`
 - 帳號欄位（`/profile/account`）包含會員層級 `firstName` / `lastName`，DB 對應 `User.firstName` / `User.lastName`。
 
-## Checkout API（M5：非金流）
+## Checkout API（M7：Stripe Test Mode - Done）
 
-- 已完成 checkout API + 前台串接（不含 Stripe 扣款）：
+- 已完成 checkout API + Stripe 測試金流閉環（雙模式）：
   - `GET /api/checkout`
   - `POST /api/checkout/promo`
   - `POST /api/checkout/place-order`
-- `place-order` 回傳 `paymentPreparation`（`provider: stripe`, `mode: M7_PENDING`）供 M7 直接接續。
+  - `POST /api/payments/stripe/webhook`
+- `place-order` 付款模式：
+  - `paymentMethod=card`：
+    - 後端建立 `PaymentIntent`
+    - 回傳 `paymentPreparation.mode=STRIPE_EMBEDDED` + `clientSecret`
+    - 前端在 `/checkout` 站內使用 Stripe Elements + `confirmCardPayment` 完成付款（不跳頁）
+  - `paymentMethod=paypal`（前台按鈕文案已改為 `Stripe`）：
+    - 後端建立 Stripe Checkout Session
+    - 回傳 `redirectUrl` + `paymentPreparation.mode=STRIPE_CHECKOUT`
+    - 前端導轉到 Stripe 測試結帳頁
+  - `paymentMethod=gpay`：
+    - 目前為 UI 預留（`paymentPreparation.mode=M7_PENDING`）
+- Webhook 已包含簽章驗證與 idempotency（事件去重），可正確回寫訂單狀態。
+
+Stripe 必要環境變數：
+
+```env
+STRIPE_SECRET_KEY=sk_test_xxx
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+APP_BASE_URL=http://localhost:3000
+STRIPE_SUCCESS_URL=http://localhost:3000/checkout/success
+STRIPE_CANCEL_URL=http://localhost:3000/checkout
+```
+
+### M7 注意事項（Stripe）
+
+- 避免同時啟動多個 `stripe listen`，否則同一 webhook 事件會被重複轉發（雖有 idempotency，仍會造成噪音）。
+- 本機使用 Stripe CLI 轉發時，`STRIPE_WEBHOOK_SECRET` 必須與當前 listener 顯示值一致。
+- 涉及 `.env.local`、Prisma schema/migration、套件安裝等基礎設施層變更後，請重啟 `next dev`。
+
+## Orders Page（M7）
+
+- 新增前台路由：`/orders`
+- 頁面結構（由上到下）：
+  1. 訂單資訊區塊（顯示已完成訂單）
+  2. 購物車最愛區塊（重用 Cart Favorites）
+  3. 你可能也會喜歡（重用 Product Recommendations）
+- 新增 API：
+  - `GET /api/orders`（需登入）
+  - 回傳已完成訂單（`status in [PAID, REFUNDED]` 或 `paymentStatus=CAPTURED`）
 
 ## Avatar Upload (FormData + Sharp + Cloudinary)
 
@@ -208,6 +248,26 @@ CLOUDINARY_API_SECRET=...
 
 - `?_rsc=...` 是 Next.js App Router 頁面資料流，屬於框架正常行為。
 - 驗證後端資料請直接測試 `/api/*`（統一回傳 `code/message/data`）。
+
+## 基礎設施層變更（需重啟）
+
+當變更涉及以下內容時，`next dev` 需要重啟（必要時清掉 `.next`）：
+- Prisma schema / migration / generate
+- `.env` / `.env.local`
+- 套件安裝移除
+- Next/TS/build 設定
+
+建議流程：
+
+```bash
+pkill -f "next-server"
+rm -rf .next
+npm run prisma:generate
+npm run prisma:migrate
+npm run dev
+```
+
+完整排錯請參考：`docs/troubleshooting.md`
 
 ## localStorage 策略（M5 現況）
 
@@ -261,6 +321,7 @@ src/
         page.tsx
         [slug]/page.tsx
       cart/page.tsx
+      orders/page.tsx
       checkout/page.tsx
     admin/
       README.md
@@ -269,10 +330,13 @@ src/
     api/
       auth/*
       cart/*
+      checkout/*
       favorites/*
       health/route.ts
       help/route.ts
       home/route.ts
+      orders/route.ts
+      payments/stripe/webhook/route.ts
       products/*
       profile/*
       snkrs/route.ts
@@ -323,4 +387,4 @@ M1 已具備部署到 Vercel 的基本條件。實際部署請先完成：
 
 ## Next Milestone
 
-Step5（M5）：完成 orders/checkout API，並收斂前台剩餘 mock data 切換到 DB/API。
+Step8（M8）：後台管理站落地（AdminLayout + CRUD + 權限）。

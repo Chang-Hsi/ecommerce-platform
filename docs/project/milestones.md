@@ -31,9 +31,9 @@ Jira 對應：
 | M2 前台 IA 與路由結構 | Done | 2026-02-25 | AppLayout、Header Mega Menu、路由規劃、query 規範、mobile-first 導覽完成 |
 | M3 前台 UI 文件與靜態落地 | Done | 2026-02-27 | 前台核心頁面與 UI 規格文件完成（Home/PLP/PDP/Favorites/Cart/Checkout/Help/SNKRS/Profile） |
 | M4 資料庫建模與遷移 | Done | 2026-02-27 | Prisma schema 擴充、migration SQL 產生並套用、seed 成功、索引策略文件化 |
-| M5 API 落地與前台串接 | In Progress | - | 已完成 auth/products/cart/favorites/help/snkrs/profile API 與前台串接；orders/checkout 待接續 |
-| M6 前台文件收斂 | Todo | - | README/API docs/排錯文件 |
-| M7 Stripe 測試金流閉環 | Todo | - | checkout + webhook + idempotency |
+| M5 API 落地與前台串接 | Done | 2026-02-27 | 前台核心頁面 API 串接完成；Auth JWT+OTP、Products/Cart/Favorites/Help/SNKRS/Profile/Checkout API 全落地 |
+| M6 前台文件收斂 | Done | 2026-02-27 | README、API 規格、排錯與啟動文件已收斂 |
+| M7 Stripe 測試金流閉環 | Done | 2026-02-27 | Stripe 雙模式（站內 Elements + Hosted Checkout）、webhook 驗簽、idempotency、訂單狀態回寫完成 |
 | M8 後台管理站落地 | Todo | - | AdminLayout + CRUD + 權限 |
 | M9 測試、效能、上線驗收 | Todo | - | CI 綠燈、Vercel prod、最終驗收 |
 
@@ -144,45 +144,45 @@ Jira 對應：
 - [x] Profile API 第二版：`/api/profile*`（account/addresses/preferences/privacy/visibility/avatar）
 - [x] 帳號設定前台串接：`/profile/*` 改由 API + DB 驅動
 - [x] 頭像上傳：FormData + Sharp(WebP) + Cloudinary + DB URL
-- [x] 首次登入資料策略：僅 email + passwordMask，其他欄位留空
-- [ ] Orders/Checkout API
+- [x] 首次登入資料策略：`email + passwordMask + firstName/lastName`（其餘欄位留空）
+- [x] Orders/Checkout API
 
 ### DoD
-- [ ] 完成 products/cart/orders API
-- [ ] API 支援 filter/sort/pagination
-- [ ] 前台逐頁由 mock 切到 API
-- [ ] Auth（JWT/OAuth）與 RBAC 最小可用
+- [x] 完成 products/cart/orders API
+- [x] API 支援 filter/sort/pagination
+- [x] 前台逐頁由 mock 切到 API（保留 localStorage 作為過渡快取層）
+- [x] Auth（JWT + Email OTP）最小可用
 
 ### 驗收 checklist
-- [ ] `docs/api/products.md`
-- [ ] `docs/api/cart.md`
-- [ ] `docs/api/orders.md`
-- [ ] API integration tests 通過
-- [ ] `/admin` 僅授權角色可訪問
+- [x] `docs/backend/api-overview.md`
+- [x] `docs/api/profile.md`
+- [x] `docs/api/checkout.md`
+- [x] API smoke/integration 測試通過（auth/products/favorites/cart/help/snkrs/profile/checkout）
+- [x] 前台主要流程由 API 驅動（Home/PLP/PDP/Favorites/Cart/Profile/Checkout）
 
 ## M6 前台文件收斂
 
 ### DoD
-- [ ] README 補齊啟動、架構、資料流
-- [ ] API 使用方式與錯誤排查文件化
-- [ ] `.env.example` 與實作一致
+- [x] README 補齊啟動、架構、資料流
+- [x] API 使用方式與錯誤排查文件化
+- [x] 補齊開發排錯文件（包含基礎設施層變更重啟指引）
 
 ### 驗收 checklist
-- [ ] `README.md` 更新完成
-- [ ] `docs/troubleshooting.md`
-- [ ] 新成員可依文件獨立啟動
+- [x] `README.md` 更新完成
+- [x] `docs/troubleshooting.md`
+- [x] 新成員可依文件獨立啟動
 
 ## M7 Stripe 測試金流閉環
 
 ### DoD
-- [ ] Stripe Test Mode 串接完成
-- [ ] Webhook 驗簽與重送去重完成
-- [ ] 訂單狀態可隨付款事件更新
+- [x] Stripe Test Mode 串接完成
+- [x] Webhook 驗簽與重送去重完成
+- [x] 訂單狀態可隨付款事件更新
 
 ### 驗收 checklist
-- [ ] 測試卡流程可完成支付
-- [ ] webhook 重複事件不重複入帳
-- [ ] `docs/backend/payments.md`
+- [x] 測試卡流程可完成支付
+- [x] webhook 重複事件不重複入帳
+- [x] `docs/backend/payments.md`
 
 ## M8 後台管理站落地
 

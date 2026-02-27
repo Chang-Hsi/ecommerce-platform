@@ -4,7 +4,7 @@
 
 ## Scope
 
-- Storefront URL scope: `/`, `/products`, `/products/[slug]`, `/cart`, `/checkout`, `/favorites`, `/help`, `/join`, `/snkrs`
+- Storefront URL scope: `/`, `/products`, `/products/[slug]`, `/cart`, `/orders`, `/checkout`, `/favorites`, `/help`, `/join`, `/snkrs`
 - Auth URL scope: `/login`, `/login/verify`
 
 說明：
@@ -22,6 +22,7 @@ src/
       products/page.tsx
       products/[slug]/page.tsx
       cart/page.tsx
+      orders/page.tsx
       checkout/page.tsx
       favorites/page.tsx
       help/page.tsx

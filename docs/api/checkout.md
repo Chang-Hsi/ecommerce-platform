@@ -1,4 +1,4 @@
-# Checkout API 規格（M5）
+# Checkout API 規格（M7 Done）
 
 更新日期：2026-02-27
 
@@ -16,64 +16,19 @@
 }
 ```
 
-## 2. 資料模型
+## 2. API 一覽
 
-```ts
-type CheckoutPreview = {
-  form: CheckoutFormState;
-  items: CheckoutOrderItem[];
-  summary: CheckoutSummary;
-  appliedPromo: { code: string; discountAmount: number } | null;
-  deliveryWindowLabel: string;
-};
-```
+- `GET /api/checkout`
+- `POST /api/checkout/promo`
+- `POST /api/checkout/place-order`
+- `POST /api/payments/stripe/webhook`
 
-## 3. API 一覽
+## 3. Checkout
 
 ### 3.1 `GET /api/checkout`
 
-- 說明：讀取結帳頁初始化資料（表單預設值、商品、摘要、已套用促銷碼）
-- 成功回應：
-
-```json
-{
-  "code": 0,
-  "message": "ok",
-  "data": {
-    "checkout": {
-      "form": {
-        "email": "user@example.com",
-        "firstName": "",
-        "lastName": "",
-        "addressQuery": "",
-        "phone": "",
-        "billingSameAsShipping": true,
-        "billingFirstName": "",
-        "billingLastName": "",
-        "billingAddress": "",
-        "billingPhone": "",
-        "cardName": "",
-        "cardNumber": "",
-        "cardExpiry": "",
-        "cardCvc": "",
-        "saveCardForFuture": false,
-        "setAsDefaultCard": false
-      },
-      "items": [],
-      "summary": {
-        "subtotal": 0,
-        "originalSubtotal": 0,
-        "shippingFee": 0,
-        "promoDiscount": 0,
-        "total": 0,
-        "savings": 0
-      },
-      "appliedPromo": null,
-      "deliveryWindowLabel": "在 3月4日 週三至 3月9日 週一之間送達"
-    }
-  }
-}
-```
+- 說明：讀取結帳初始化資料（form/items/summary/appliedPromo/deliveryWindow）
+- 成功：`data.checkout`（含完整 `CheckoutFormState`）
 
 ### 3.2 `POST /api/checkout/promo`
 
@@ -86,13 +41,9 @@ type CheckoutPreview = {
 }
 ```
 
-- 成功：回傳最新 `checkout`
-- 失敗：
-  - `400`：促銷碼格式錯誤或促銷碼無效
-
 ### 3.3 `POST /api/checkout/place-order`
 
-- 說明：建立訂單（M5 不做實際扣款）
+- 說明：建立訂單與付款前置資料
 - body：
 
 ```json
@@ -109,9 +60,9 @@ type CheckoutPreview = {
     "billingAddress": "",
     "billingPhone": "",
     "cardName": "WANG HSIAO MEI",
-    "cardNumber": "4242424242424242",
-    "cardExpiry": "12/30",
-    "cardCvc": "123",
+    "cardNumber": "",
+    "cardExpiry": "",
+    "cardCvc": "",
     "saveCardForFuture": false,
     "setAsDefaultCard": false
   },
@@ -119,7 +70,60 @@ type CheckoutPreview = {
 }
 ```
 
-- 成功回應（重點）：
+- `paymentMethod` 對應：
+  - `card`：站內 Stripe Elements（PaymentIntent）
+  - `paypal`：前端文案為 `Stripe`，走 Stripe Hosted Checkout
+  - `gpay`：M7 保留 UI（`M7_PENDING`）
+
+- 成功回應範例 A（`card` 站內付款）：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "order": {
+      "id": "cm...",
+      "status": "PENDING_PAYMENT",
+      "paymentStatus": "PENDING",
+      "total": 27540,
+      "currency": "TWD"
+    },
+    "redirectUrl": "",
+    "paymentPreparation": {
+      "provider": "stripe",
+      "mode": "STRIPE_EMBEDDED",
+      "clientSecret": "pi_..._secret_..."
+    }
+  }
+}
+```
+
+- 成功回應範例 B（`paypal` -> Stripe Checkout）：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "order": {
+      "id": "cm...",
+      "status": "PENDING_PAYMENT",
+      "paymentStatus": "PENDING",
+      "total": 27540,
+      "currency": "TWD"
+    },
+    "redirectUrl": "https://checkout.stripe.com/c/pay/cs_test_...",
+    "paymentPreparation": {
+      "provider": "stripe",
+      "mode": "STRIPE_CHECKOUT",
+      "clientSecret": null
+    }
+  }
+}
+```
+
+- 成功回應範例 C（`gpay` UI 預留）：
 
 ```json
 {
@@ -143,10 +147,26 @@ type CheckoutPreview = {
 }
 ```
 
-- 失敗：
-  - `400`：表單格式錯誤、購物車為空、欄位驗證失敗
+## 4. Webhook（Stripe）
 
-## 4. M5 / M7 邊界
+### 4.1 `POST /api/payments/stripe/webhook`
 
-- M5：完成訂單建立與付款前狀態落庫（`PENDING_PAYMENT` / `PENDING`）
-- M7：Stripe test mode（建立 PaymentIntent、`clientSecret`、Webhook 回寫訂單狀態）
+- 驗簽：`stripe-signature` + `STRIPE_WEBHOOK_SECRET`
+- 去重：`PaymentWebhookEvent.eventId` 唯一鍵
+- 狀態回寫：
+  - 成功事件 -> `Order.status=PAID`、`Order.paymentStatus=CAPTURED`
+  - 失敗事件 -> `Order.status=FAILED`、`Order.paymentStatus=FAILED`
+
+### 4.2 目前處理事件
+
+- `checkout.session.completed`
+- `checkout.session.expired`
+- `checkout.session.async_payment_failed`
+- `payment_intent.succeeded`
+- `payment_intent.payment_failed`
+
+## 5. 注意事項
+
+- `place-order` 會先建立訂單，再進入 Stripe 付款流程；前端需正確處理 `paymentPreparation.mode`。
+- 不要同時開多個 `stripe listen` 轉發，避免同一事件重複送達。
+- 本機 Stripe CLI 重啟後，若 `whsec` 改變，需同步更新 `.env.local` 的 `STRIPE_WEBHOOK_SECRET`。

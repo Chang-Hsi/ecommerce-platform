@@ -1,5 +1,7 @@
 "use client";
 
+import { CardNumberElement } from "@stripe/react-stripe-js";
+import type { Stripe, StripeElements } from "@stripe/stripe-js";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { checkoutContent } from "@/content/checkout";
@@ -191,7 +193,7 @@ export function useCheckoutController() {
     }
   }
 
-  async function onPlaceOrder() {
+  async function onPlaceOrder(stripeContext?: { stripe: Stripe | null; elements: StripeElements | null }) {
     setIsSubmitted(true);
     setSubmitError(null);
     setTouchedFields((current) => {
@@ -214,7 +216,59 @@ export function useCheckoutController() {
         paymentMethod,
       });
 
-      router.push(result.redirectUrl || "/checkout/success");
+      if (result.paymentPreparation.mode === "STRIPE_EMBEDDED") {
+        if (!result.paymentPreparation.clientSecret) {
+          setSubmitError("付款初始化失敗（缺少 client secret）");
+          return;
+        }
+
+        if (!stripeContext?.stripe || !stripeContext.elements) {
+          setSubmitError("付款元件尚未載入完成，請稍後再試。");
+          return;
+        }
+
+        const cardNumberElement = stripeContext.elements.getElement(CardNumberElement);
+        if (!cardNumberElement) {
+          setSubmitError("找不到信用卡輸入元件，請重新整理後再試。");
+          return;
+        }
+
+        const confirmation = await stripeContext.stripe.confirmCardPayment(
+          result.paymentPreparation.clientSecret,
+          {
+            payment_method: {
+              card: cardNumberElement,
+              billing_details: {
+                name: form.cardName.trim(),
+                email: form.email.trim(),
+                phone: form.phone.trim(),
+              },
+            },
+          },
+        );
+
+        if (confirmation.error) {
+          setSubmitError(confirmation.error.message ?? "信用卡付款失敗，請確認卡片資訊後再試。");
+          return;
+        }
+
+        const status = confirmation.paymentIntent?.status;
+        if (status === "succeeded" || status === "processing" || status === "requires_capture") {
+          router.push(`/checkout/success?orderId=${encodeURIComponent(result.order.id)}`);
+          return;
+        }
+
+        setSubmitError(`付款尚未完成（${status ?? "unknown"}），請稍後再試。`);
+        return;
+      }
+
+      const nextUrl = result.redirectUrl || "/checkout/success";
+      if (/^https?:\/\//.test(nextUrl)) {
+        window.location.assign(nextUrl);
+        return;
+      }
+
+      router.push(nextUrl);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "建立訂單失敗");
     } finally {

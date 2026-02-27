@@ -1,4 +1,4 @@
-# API Overview（M5）
+# API Overview（M7）
 
 更新日期：2026-02-27
 
@@ -42,6 +42,7 @@
 - Products：`GET /api/products`、`GET /api/products/[slug]`
 - Favorites：`GET /api/favorites`、`POST /api/favorites`、`DELETE /api/favorites/[slug]`
 - Cart：`GET /api/cart`、`POST /api/cart/items`、`PATCH/DELETE /api/cart/items/[itemId]`
+- Orders：`GET /api/orders`
 - Help：`GET /api/help`
 - SNKRS：`GET /api/snkrs`
 
@@ -58,15 +59,24 @@
   - `PUT /api/profile/visibility`
   - `POST /api/profile/avatar`
 
-### 3.5 Checkout（M5：非金流）
+### 3.5 Checkout / Payment
 
-- 規格文件：[docs/api/checkout.md](../api/checkout.md)
+- 規格文件：
+  - Checkout：[docs/api/checkout.md](../api/checkout.md)
+  - Payments：[docs/backend/payments.md](./payments.md)
 - Routes：
   - `GET /api/checkout`
   - `POST /api/checkout/promo`
   - `POST /api/checkout/place-order`
+  - `POST /api/payments/stripe/webhook`
+
+### 3.6 Orders
+
+- 規格文件：[docs/api/orders.md](../api/orders.md)
+- Routes：
+  - `GET /api/orders`
 
 ## 4. 里程碑邊界（Checkout/Payment）
 
-- M5：完成 checkout preview / promo / place-order（建立訂單與 payment attempt，狀態為 pending）
-- M7：串接 Stripe test mode、取得 `clientSecret`、支付成功後更新訂單狀態
+- M5：完成 checkout preview / promo / place-order（建立訂單與 payment attempt，狀態 pending）
+- M7：完成 Stripe test mode（Embedded + Checkout）+ webhook 驗簽 + idempotency + 訂單狀態回寫

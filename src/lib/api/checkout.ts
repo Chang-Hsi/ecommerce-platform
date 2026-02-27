@@ -24,7 +24,7 @@ export type PlaceOrderResultDto = {
   redirectUrl: string;
   paymentPreparation: {
     provider: "stripe";
-    mode: "M7_PENDING";
+    mode: "M7_PENDING" | "STRIPE_CHECKOUT" | "STRIPE_EMBEDDED";
     clientSecret: string | null;
   };
 };

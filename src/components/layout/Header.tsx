@@ -490,7 +490,7 @@ export function Header() {
   function handleAccountAction(action: string) {
     switch (action) {
       case "orders":
-        router.push("/cart");
+        router.push("/orders");
         return;
       case "favorites":
         router.push("/favorites");

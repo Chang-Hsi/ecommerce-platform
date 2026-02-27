@@ -17,11 +17,11 @@ export const checkoutContent = {
   promoDiscountAmount: 500,
   paymentMethods: [
     { value: "card", label: "信用卡或金融簽帳卡" },
-    { value: "paypal", label: "PayPal" },
+    { value: "paypal", label: "Stripe" },
     { value: "gpay", label: "Google Pay" },
   ] as Array<{ value: CheckoutPaymentMethod; label: string }>,
   placeOrderDisclaimer:
-    "點選「下訂單」即代表你同意服務條款與隱私政策。M5 會建立訂單並進入待付款狀態，實際 Stripe 扣款於 M7 串接。",
+    "點選「下訂單」即代表你同意服務條款與隱私政策。信用卡會在本站完成付款；Stripe 按鈕會導向 Stripe 測試結帳頁。",
   placeOrderButtonLabel: "下訂單",
   orderSummaryTitle: "訂單摘要",
   freeShippingQualifiedLabel: "你已符合免運費資格！",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { requestLoginCodeFromApi } from "@/lib/api/auth";
 import {
@@ -53,7 +54,9 @@ export function LoginPage() {
   return (
     <section className="mx-auto w-full max-w-[560px] px-1 py-4 md:py-8">
       <div className="mb-6 flex items-center gap-6 text-2xl text-zinc-900">
-        <span className="font-black italic tracking-tight">SwooshLab</span>
+        <Link href="/" className="text-xl font-black italic tracking-tight text-black">
+        SwooshLab
+        </Link>
       </div>
 
       <h1 className="max-w-[520px] text-xl font-semibold leading-tight text-zinc-900 md:text-2xl">

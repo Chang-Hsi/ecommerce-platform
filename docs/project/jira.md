@@ -39,7 +39,10 @@ JIRA_PROJECT_KEY=EP
 - `M3` 已在 `docs/project/milestones.md` 標記為 `Done`
 - Jira issue `EP-5` 已同步為 `完成`
 - Jira issue `EP-6` 已同步為 `完成`
-- `M5` 已進入 `In Progress`（Batch 2 API 落地，Profile API/上傳已完成）
+- Jira issue `EP-7`（M5）已同步為 `完成`
+- Jira issue `EP-8`（M6）已同步為 `完成`
+- `M7` 已在本地文件標記為 `Done`（EP-9 請依本手冊同步為 `完成`）
+- 當前里程碑：準備進入 `M8`（EP-10）
 
 ## 4. 驗證連線
 

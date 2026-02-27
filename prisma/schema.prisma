@@ -324,6 +324,21 @@ model PaymentAttempt {
   @@index([provider, status])
 }
 
+model PaymentWebhookEvent {
+  id         String    @id @default(cuid())
+  provider   String
+  eventId    String    @unique
+  eventType  String
+  orderId    String?
+  processedAt DateTime?
+  lastError  String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([provider, eventType, createdAt(sort: Desc)])
+  @@index([orderId, createdAt(sort: Desc)])
+}
+
 enum UserRole {
   CUSTOMER
   ADMIN
